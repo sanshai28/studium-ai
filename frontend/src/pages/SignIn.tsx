@@ -59,6 +59,10 @@ const SignIn: React.FC = () => {
             />
           </div>
 
+          <p className="auth-link" style={{ margin: '0.5rem 0', textAlign: 'right' }}>
+            <Link to="/request-password-reset">Forgot Password?</Link>
+          </p>
+
           <button type="submit" className="auth-button" disabled={isLoading}>
             {isLoading ? 'Signing In...' : 'Sign In'}
           </button>
