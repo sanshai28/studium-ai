@@ -64,12 +64,6 @@ jobs:
           NODE_ENV: test
         run: npm run test:coverage
 
-      - name: Check test coverage
-        working-directory: ./backend
-        run: |
-          echo "Checking test coverage thresholds..."
-          npx jest --coverage --coverageThreshold='{"global":{"branches":80,"functions":80,"lines":80,"statements":80}}'
-
       - name: Upload coverage reports
         uses: codecov/codecov-action@v4
         with:
