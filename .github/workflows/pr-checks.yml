@@ -46,6 +46,8 @@ jobs:
 
       - name: Generate Prisma Client
         working-directory: ./backend
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/tutor_test_db
         run: npx prisma generate
 
       - name: Run Prisma migrations
