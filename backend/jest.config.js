@@ -13,6 +13,7 @@ module.exports = {
     '!src/middleware/**',
     '!src/utils/apiResponse.ts',
     '!src/services/emailService.ts',
+    '!src/__tests__/**',
   ],
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'lcov', 'html', 'json-summary'],
