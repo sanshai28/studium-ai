@@ -22,14 +22,54 @@ model User {
 }
 
 model Notebook {
-  id        String   @id @default(uuid())
-  title     String
-  content   String   @db.Text
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id            String         @id @default(uuid())
+  title         String
+  content       String         @db.Text
+  userId        String
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sources       Source[]
+  conversations Conversation[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
 
   @@index([userId])
   @@map("notebooks")
+}
+
+model Source {
+  id         String   @id @default(uuid())
+  notebookId String
+  notebook   Notebook @relation(fields: [notebookId], references: [id], onDelete: Cascade)
+  fileName   String
+  fileType   String
+  fileSize   Int
+  filePath   String
+  uploadedAt DateTime @default(now())
+
+  @@index([notebookId])
+  @@map("sources")
+}
+
+model Conversation {
+  id         String    @id @default(uuid())
+  notebookId String
+  notebook   Notebook  @relation(fields: [notebookId], references: [id], onDelete: Cascade)
+  messages   Message[]
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@index([notebookId])
+  @@map("conversations")
+}
+
+model Message {
+  id             String       @id @default(uuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  role           String
+  content        String       @db.Text
+  createdAt      DateTime     @default(now())
+
+  @@index([conversationId])
+  @@map("messages")
 }

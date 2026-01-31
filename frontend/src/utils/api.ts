@@ -60,4 +60,61 @@ export const notebooksAPI = {
   },
 };
 
+export const sourcesAPI = {
+  upload: async (notebookId: string, file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await api.post(`/notebooks/${notebookId}/sources`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  },
+
+  getAll: async (notebookId: string) => {
+    const response = await api.get(`/notebooks/${notebookId}/sources`);
+    return response.data;
+  },
+
+  delete: async (sourceId: string) => {
+    const response = await api.delete(`/sources/${sourceId}`);
+    return response.data;
+  },
+
+  download: async (sourceId: string) => {
+    const response = await api.get(`/sources/${sourceId}/download`, {
+      responseType: 'blob',
+    });
+    return response.data;
+  },
+};
+
+export const conversationsAPI = {
+  create: async (notebookId: string) => {
+    const response = await api.post(`/notebooks/${notebookId}/conversations`);
+    return response.data;
+  },
+
+  getAll: async (notebookId: string) => {
+    const response = await api.get(`/notebooks/${notebookId}/conversations`);
+    return response.data;
+  },
+
+  getMessages: async (conversationId: string) => {
+    const response = await api.get(`/conversations/${conversationId}/messages`);
+    return response.data;
+  },
+
+  sendMessage: async (conversationId: string, content: string) => {
+    const response = await api.post(`/conversations/${conversationId}/messages`, { content });
+    return response.data;
+  },
+
+  delete: async (conversationId: string) => {
+    const response = await api.delete(`/conversations/${conversationId}`);
+    return response.data;
+  },
+};
+
 export default api;
