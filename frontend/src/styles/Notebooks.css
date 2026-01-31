@@ -302,6 +302,7 @@
   align-items: center;
   font-size: 0.9375rem;
   border-bottom: 1px solid #e0e0e0;
+  animation: slideDown 0.3s ease-out;
 }
 
 .btn-close-error {
@@ -314,6 +315,41 @@
   width: 24px;
   height: 24px;
   line-height: 1;
+}
+
+.success-banner {
+  background: #e6f4ea;
+  color: #1e8e3e;
+  padding: 1rem 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9375rem;
+  border-bottom: 1px solid #e0e0e0;
+  animation: slideDown 0.3s ease-out;
+}
+
+.btn-close-success {
+  background: none;
+  border: none;
+  color: #1e8e3e;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  line-height: 1;
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 .empty-main {

@@ -21,6 +21,7 @@ const Notebooks: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -90,37 +91,53 @@ const Notebooks: React.FC = () => {
   };
 
   const handleSave = async () => {
-    if (!editTitle.trim() || !editContent.trim()) {
-      setError('Title and content are required');
+    if (!editTitle.trim()) {
+      setError('Title is required');
+      setSuccessMessage('');
+      return;
+    }
+
+    if (!editContent.trim()) {
+      setError('Content cannot be empty');
+      setSuccessMessage('');
       return;
     }
 
     try {
       setIsSaving(true);
       setError('');
+      setSuccessMessage('');
 
       if (selectedNotebook?.id === 'new') {
-        const data = await notebooksAPI.create({ title: editTitle, content: editContent });
+        const data = await notebooksAPI.create({ title: editTitle.trim(), content: editContent.trim() });
         const newNotebook = data.notebook;
         setNotebooks([newNotebook, ...notebooks]);
         setSelectedNotebook(newNotebook);
+        setSuccessMessage('Notebook created successfully!');
       } else if (selectedNotebook) {
         const data = await notebooksAPI.update(selectedNotebook.id, {
-          title: editTitle,
-          content: editContent,
+          title: editTitle.trim(),
+          content: editContent.trim(),
         });
         const updatedNotebook = data.notebook;
         setNotebooks(notebooks.map((n) => (n.id === updatedNotebook.id ? updatedNotebook : n)));
         setSelectedNotebook(updatedNotebook);
+        setSuccessMessage('Notebook saved successfully!');
       }
 
       setIsEditing(false);
+      setEditTitle('');
+      setEditContent('');
+
+      // Auto-clear success message after 3 seconds
+      setTimeout(() => setSuccessMessage(''), 3000);
     } catch (err: unknown) {
+      console.error('Save error:', err);
       const errorMessage = err && typeof err === 'object' && 'response' in err &&
         err.response && typeof err.response === 'object' && 'data' in err.response &&
         err.response.data && typeof err.response.data === 'object' && 'error' in err.response.data
         ? String(err.response.data.error)
-        : 'Failed to save notebook';
+        : 'Failed to save notebook. Please try again.';
       setError(errorMessage);
     } finally {
       setIsSaving(false);
@@ -257,6 +274,13 @@ const Notebooks: React.FC = () => {
           <div className="error-banner">
             {error}
             <button onClick={() => setError('')} className="btn-close-error">×</button>
+          </div>
+        )}
+
+        {successMessage && (
+          <div className="success-banner">
+            {successMessage}
+            <button onClick={() => setSuccessMessage('')} className="btn-close-success">×</button>
           </div>
         )}
 
