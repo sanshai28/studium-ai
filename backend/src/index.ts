@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import authRoutes from './routes/authRoutes';
+import notebookRoutes from './routes/notebookRoutes';
 import corsOptions from './config/cors.config';
 import clientDetection from './middleware/clientDetection';
 
@@ -22,6 +23,7 @@ app.use(clientDetection);
 
 // API v1 routes
 app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/notebooks', notebookRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
@@ -44,6 +46,7 @@ app.get('/api/version', (req, res) => {
 
 // Backwards compatibility - redirect /api/auth to /api/v1/auth
 app.use('/api/auth', authRoutes);
+app.use('/api/notebooks', notebookRoutes);
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);

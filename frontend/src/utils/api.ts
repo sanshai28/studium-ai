@@ -33,4 +33,31 @@ export const authAPI = {
   },
 };
 
+export const notebooksAPI = {
+  getAll: async () => {
+    const response = await api.get('/notebooks');
+    return response.data;
+  },
+
+  getOne: async (id: string) => {
+    const response = await api.get(`/notebooks/${id}`);
+    return response.data;
+  },
+
+  create: async (notebook: { title: string; content: string }) => {
+    const response = await api.post('/notebooks', notebook);
+    return response.data;
+  },
+
+  update: async (id: string, notebook: { title?: string; content?: string }) => {
+    const response = await api.put(`/notebooks/${id}`, notebook);
+    return response.data;
+  },
+
+  delete: async (id: string) => {
+    const response = await api.delete(`/notebooks/${id}`);
+    return response.data;
+  },
+};
+
 export default api;

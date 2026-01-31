@@ -32,9 +32,14 @@ const Home: React.FC = () => {
     <div className="home">
       <h1>Welcome back, {user.name || user.email}!</h1>
       <p>Your intelligent note-taking companion</p>
-      <button onClick={handleSignOut} style={{ marginTop: '2rem' }}>
-        Sign Out
-      </button>
+      <div style={{ marginTop: '2rem' }}>
+        <button onClick={() => navigate('/notebooks')} style={{ marginRight: '1rem' }}>
+          My Notebooks
+        </button>
+        <button onClick={handleSignOut}>
+          Sign Out
+        </button>
+      </div>
     </div>
   )
 }
