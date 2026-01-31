@@ -57,12 +57,14 @@ const Notebooks: React.FC = () => {
 
   useEffect(() => {
     loadNotebooks();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     if (selectedNotebook && selectedNotebook.id !== 'new') {
       loadNotebookData(selectedNotebook.id);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedNotebook?.id]);
 
   const loadNotebooks = async () => {

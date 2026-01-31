@@ -30,20 +30,7 @@ const SourcesPane: React.FC<SourcesPaneProps> = ({ notebookId, sources, onSource
     setIsDragging(false);
   }, []);
 
-  const handleDrop = useCallback(async (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-    const files = Array.from(e.dataTransfer.files);
-    await uploadFiles(files);
-  }, [notebookId]);
-
-  const handleFileInput = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
-    await uploadFiles(files);
-    e.target.value = '';
-  };
-
-  const uploadFiles = async (files: File[]) => {
+  const uploadFiles = useCallback(async (files: File[]) => {
     setIsUploading(true);
     setError(null);
     try {
@@ -57,6 +44,19 @@ const SourcesPane: React.FC<SourcesPaneProps> = ({ notebookId, sources, onSource
     } finally {
       setIsUploading(false);
     }
+  }, [notebookId, onSourcesChange]);
+
+  const handleDrop = useCallback(async (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const files = Array.from(e.dataTransfer.files);
+    await uploadFiles(files);
+  }, [uploadFiles]);
+
+  const handleFileInput = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    await uploadFiles(files);
+    e.target.value = '';
   };
 
   const handleDelete = async (sourceId: string) => {
