@@ -1,6 +1,7 @@
 import prisma from '../../utils/prisma';
 
 export const clearDatabase = async () => {
+  await prisma.notebook.deleteMany({});
   await prisma.user.deleteMany({});
 };
 
@@ -26,4 +27,18 @@ export const generateValidToken = (userId: string) => {
   const JWT_SECRET = process.env.JWT_SECRET || 'default-secret-key';
 
   return jwt.sign({ userId }, JWT_SECRET, { expiresIn: '7d' });
+};
+
+export const createTestNotebook = async (
+  userId: string,
+  title: string = 'Test Notebook',
+  content: string = 'Test content'
+) => {
+  return await prisma.notebook.create({
+    data: {
+      title,
+      content,
+      userId,
+    },
+  });
 };
