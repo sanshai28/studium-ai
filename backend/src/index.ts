@@ -3,6 +3,8 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import authRoutes from './routes/authRoutes';
 import notebookRoutes from './routes/notebookRoutes';
+import sourceRoutes from './routes/sourceRoutes';
+import conversationRoutes from './routes/conversationRoutes';
 import corsOptions from './config/cors.config';
 import clientDetection from './middleware/clientDetection';
 
@@ -24,6 +26,8 @@ app.use(clientDetection);
 // API v1 routes
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/notebooks', notebookRoutes);
+app.use('/api/v1', sourceRoutes);
+app.use('/api/v1', conversationRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
@@ -47,6 +51,8 @@ app.get('/api/version', (req, res) => {
 // Backwards compatibility - redirect /api/auth to /api/v1/auth
 app.use('/api/auth', authRoutes);
 app.use('/api/notebooks', notebookRoutes);
+app.use('/api', sourceRoutes);
+app.use('/api', conversationRoutes);
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
