@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { notebooksAPI } from '../utils/api';
+import { useAuth } from '../contexts/AuthContext';
 import '../styles/Notebooks.css';
 
 interface Notebook {
@@ -13,12 +14,20 @@ interface Notebook {
 
 const Notebooks: React.FC = () => {
   const [notebooks, setNotebooks] = useState<Notebook[]>([]);
+  const [selectedNotebook, setSelectedNotebook] = useState<Notebook | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editTitle, setEditTitle] = useState('');
+  const [editContent, setEditContent] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   useEffect(() => {
     loadNotebooks();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadNotebooks = async () => {
@@ -27,6 +36,9 @@ const Notebooks: React.FC = () => {
       setError('');
       const data = await notebooksAPI.getAll();
       setNotebooks(data.notebooks);
+      if (data.notebooks.length > 0 && !selectedNotebook) {
+        setSelectedNotebook(data.notebooks[0]);
+      }
     } catch (err: unknown) {
       const errorMessage = err && typeof err === 'object' && 'response' in err &&
         err.response && typeof err.response === 'object' && 'data' in err.response &&
@@ -39,14 +51,95 @@ const Notebooks: React.FC = () => {
     }
   };
 
-  const handleDelete = async (id: string, title: string) => {
-    if (!window.confirm(`Are you sure you want to delete "${title}"?`)) {
+  const handleSelectNotebook = (notebook: Notebook) => {
+    if (isEditing) {
+      handleCancelEdit();
+    }
+    setSelectedNotebook(notebook);
+  };
+
+  const handleCreateNew = () => {
+    const newNotebook: Notebook = {
+      id: 'new',
+      title: 'Untitled Notebook',
+      content: '',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    setSelectedNotebook(newNotebook);
+    setEditTitle('Untitled Notebook');
+    setEditContent('');
+    setIsEditing(true);
+  };
+
+  const handleEdit = () => {
+    if (selectedNotebook) {
+      setEditTitle(selectedNotebook.title);
+      setEditContent(selectedNotebook.content);
+      setIsEditing(true);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+    setEditTitle('');
+    setEditContent('');
+    if (selectedNotebook?.id === 'new') {
+      setSelectedNotebook(notebooks[0] || null);
+    }
+  };
+
+  const handleSave = async () => {
+    if (!editTitle.trim() || !editContent.trim()) {
+      setError('Title and content are required');
       return;
     }
 
     try {
-      await notebooksAPI.delete(id);
-      setNotebooks(notebooks.filter((n) => n.id !== id));
+      setIsSaving(true);
+      setError('');
+
+      if (selectedNotebook?.id === 'new') {
+        const data = await notebooksAPI.create({ title: editTitle, content: editContent });
+        const newNotebook = data.notebook;
+        setNotebooks([newNotebook, ...notebooks]);
+        setSelectedNotebook(newNotebook);
+      } else if (selectedNotebook) {
+        const data = await notebooksAPI.update(selectedNotebook.id, {
+          title: editTitle,
+          content: editContent,
+        });
+        const updatedNotebook = data.notebook;
+        setNotebooks(notebooks.map((n) => (n.id === updatedNotebook.id ? updatedNotebook : n)));
+        setSelectedNotebook(updatedNotebook);
+      }
+
+      setIsEditing(false);
+    } catch (err: unknown) {
+      const errorMessage = err && typeof err === 'object' && 'response' in err &&
+        err.response && typeof err.response === 'object' && 'data' in err.response &&
+        err.response.data && typeof err.response.data === 'object' && 'error' in err.response.data
+        ? String(err.response.data.error)
+        : 'Failed to save notebook';
+      setError(errorMessage);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!selectedNotebook || selectedNotebook.id === 'new') return;
+
+    if (!window.confirm(`Delete "${selectedNotebook.title}"?`)) {
+      return;
+    }
+
+    try {
+      await notebooksAPI.delete(selectedNotebook.id);
+      const updatedNotebooks = notebooks.filter((n) => n.id !== selectedNotebook.id);
+      setNotebooks(updatedNotebooks);
+      setSelectedNotebook(updatedNotebooks[0] || null);
+      setIsEditing(false);
     } catch (err: unknown) {
       const errorMessage = err && typeof err === 'object' && 'response' in err &&
         err.response && typeof err.response === 'object' && 'data' in err.response &&
@@ -59,83 +152,177 @@ const Notebooks: React.FC = () => {
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    });
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays < 7) return `${diffDays}d ago`;
+
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
 
+  const filteredNotebooks = notebooks.filter((notebook) =>
+    notebook.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    notebook.content.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   const getPreview = (content: string) => {
-    return content.length > 150 ? content.substring(0, 150) + '...' : content;
+    return content.length > 100 ? content.substring(0, 100) + '...' : content;
   };
 
   if (isLoading) {
     return (
-      <div className="notebooks-container">
-        <div className="notebooks-loading">Loading notebooks...</div>
+      <div className="notebook-app">
+        <div className="loading-container">
+          <div className="loading-spinner"></div>
+          <p>Loading your notebooks...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="notebooks-container">
-      <div className="notebooks-header">
-        <h1>My Notebooks</h1>
-        <button
-          className="btn-new-notebook"
-          onClick={() => navigate('/notebooks/new')}
-        >
-          + New Notebook
-        </button>
-      </div>
-
-      {error && <div className="error-message">{error}</div>}
-
-      {notebooks.length === 0 ? (
-        <div className="empty-state">
-          <p>No notebooks yet</p>
-          <p className="empty-state-subtitle">
-            Create your first notebook to get started
-          </p>
-          <button
-            className="btn-create-first"
-            onClick={() => navigate('/notebooks/new')}
-          >
-            Create Notebook
+    <div className="notebook-app">
+      {/* Sidebar */}
+      <div className="notebook-sidebar">
+        <div className="sidebar-header">
+          <div className="app-branding">
+            <div className="app-icon">📔</div>
+            <h2>Notebooks</h2>
+          </div>
+          <button className="btn-icon" onClick={() => navigate('/')} title="Home">
+            <span>🏠</span>
           </button>
         </div>
-      ) : (
-        <div className="notebooks-grid">
-          {notebooks.map((notebook) => (
-            <div key={notebook.id} className="notebook-card">
-              <div
-                className="notebook-card-content"
-                onClick={() => navigate(`/notebooks/${notebook.id}`)}
-              >
-                <h3 className="notebook-title">{notebook.title}</h3>
-                <p className="notebook-preview">{getPreview(notebook.content)}</p>
-                <div className="notebook-meta">
-                  <span className="notebook-date">
-                    Updated {formatDate(notebook.updatedAt)}
-                  </span>
-                </div>
+
+        <div className="sidebar-search">
+          <input
+            type="text"
+            placeholder="Search notebooks..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="search-input"
+          />
+        </div>
+
+        <button className="btn-new-notebook-sidebar" onClick={handleCreateNew}>
+          <span className="btn-icon-plus">+</span>
+          New Notebook
+        </button>
+
+        <div className="notebook-list">
+          {filteredNotebooks.length === 0 && searchQuery && (
+            <div className="empty-search">No notebooks found</div>
+          )}
+          {filteredNotebooks.length === 0 && !searchQuery && (
+            <div className="empty-search">
+              <p>No notebooks yet</p>
+              <p className="empty-subtitle">Create your first notebook</p>
+            </div>
+          )}
+          {filteredNotebooks.map((notebook) => (
+            <div
+              key={notebook.id}
+              className={`notebook-item ${selectedNotebook?.id === notebook.id ? 'active' : ''}`}
+              onClick={() => handleSelectNotebook(notebook)}
+            >
+              <div className="notebook-item-header">
+                <h3>{notebook.title}</h3>
+                <span className="notebook-item-date">{formatDate(notebook.updatedAt)}</span>
               </div>
-              <div className="notebook-actions">
-                <button
-                  className="btn-delete"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDelete(notebook.id, notebook.title);
-                  }}
-                >
+              <p className="notebook-item-preview">{getPreview(notebook.content)}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="sidebar-footer">
+          <div className="user-info">
+            <div className="user-avatar">{user?.name?.charAt(0) || user?.email?.charAt(0) || 'U'}</div>
+            <div className="user-details">
+              <div className="user-name">{user?.name || 'User'}</div>
+              <div className="user-email">{user?.email}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="notebook-main">
+        {error && (
+          <div className="error-banner">
+            {error}
+            <button onClick={() => setError('')} className="btn-close-error">×</button>
+          </div>
+        )}
+
+        {!selectedNotebook && notebooks.length === 0 ? (
+          <div className="empty-main">
+            <div className="empty-icon">📝</div>
+            <h2>Welcome to Notebooks</h2>
+            <p>Create your first notebook to start organizing your thoughts and ideas</p>
+            <button className="btn-create-first-large" onClick={handleCreateNew}>
+              Create Notebook
+            </button>
+          </div>
+        ) : !selectedNotebook ? (
+          <div className="empty-main">
+            <div className="empty-icon">👈</div>
+            <p>Select a notebook from the sidebar</p>
+          </div>
+        ) : isEditing ? (
+          <div className="notebook-editor">
+            <div className="editor-toolbar">
+              <button className="btn-toolbar" onClick={handleCancelEdit} disabled={isSaving}>
+                Cancel
+              </button>
+              <button className="btn-toolbar btn-primary" onClick={handleSave} disabled={isSaving}>
+                {isSaving ? 'Saving...' : 'Save'}
+              </button>
+            </div>
+
+            <input
+              type="text"
+              className="editor-title-input"
+              placeholder="Untitled Notebook"
+              value={editTitle}
+              onChange={(e) => setEditTitle(e.target.value)}
+              disabled={isSaving}
+            />
+
+            <textarea
+              className="editor-content-input"
+              placeholder="Start writing..."
+              value={editContent}
+              onChange={(e) => setEditContent(e.target.value)}
+              disabled={isSaving}
+            />
+          </div>
+        ) : (
+          <div className="notebook-viewer">
+            <div className="viewer-toolbar">
+              <div className="viewer-info">
+                <span className="viewer-date">Last edited {formatDate(selectedNotebook.updatedAt)}</span>
+              </div>
+              <div className="viewer-actions">
+                <button className="btn-toolbar" onClick={handleEdit}>
+                  Edit
+                </button>
+                <button className="btn-toolbar btn-danger" onClick={handleDelete}>
                   Delete
                 </button>
               </div>
             </div>
-          ))}
-        </div>
-      )}
+
+            <h1 className="viewer-title">{selectedNotebook.title}</h1>
+            <div className="viewer-content">{selectedNotebook.content}</div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

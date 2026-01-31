@@ -6,7 +6,6 @@ import SignUp from './pages/SignUp'
 import RequestPasswordReset from './pages/RequestPasswordReset'
 import ResetPassword from './pages/ResetPassword'
 import Notebooks from './pages/Notebooks'
-import NotebookEditor from './pages/NotebookEditor'
 import './App.css'
 
 function App() {
@@ -21,8 +20,6 @@ function App() {
             <Route path="/request-password-reset" element={<RequestPasswordReset />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/notebooks" element={<Notebooks />} />
-            <Route path="/notebooks/new" element={<NotebookEditor />} />
-            <Route path="/notebooks/:id" element={<NotebookEditor />} />
           </Routes>
         </div>
       </AuthProvider>
