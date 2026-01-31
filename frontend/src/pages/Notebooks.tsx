@@ -27,9 +27,14 @@ const Notebooks: React.FC = () => {
   const { user } = useAuth();
 
   useEffect(() => {
+    // Redirect to signin if not authenticated
+    if (!user) {
+      navigate('/signin');
+      return;
+    }
     loadNotebooks();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [user]);
 
   const loadNotebooks = async () => {
     try {
@@ -41,6 +46,15 @@ const Notebooks: React.FC = () => {
         setSelectedNotebook(data.notebooks[0]);
       }
     } catch (err: unknown) {
+      console.error('Load notebooks error:', err);
+      // Check if it's an authentication error
+      if (err && typeof err === 'object' && 'response' in err) {
+        const response = err.response as any;
+        if (response?.status === 401) {
+          navigate('/signin');
+          return;
+        }
+      }
       const errorMessage = err && typeof err === 'object' && 'response' in err &&
         err.response && typeof err.response === 'object' && 'data' in err.response &&
         err.response.data && typeof err.response.data === 'object' && 'error' in err.response.data
@@ -91,6 +105,8 @@ const Notebooks: React.FC = () => {
   };
 
   const handleSave = async () => {
+    console.log('handleSave called', { editTitle, editContent, selectedNotebook });
+
     if (!editTitle.trim()) {
       setError('Title is required');
       setSuccessMessage('');
@@ -109,16 +125,20 @@ const Notebooks: React.FC = () => {
       setSuccessMessage('');
 
       if (selectedNotebook?.id === 'new') {
+        console.log('Creating new notebook...');
         const data = await notebooksAPI.create({ title: editTitle.trim(), content: editContent.trim() });
+        console.log('Notebook created:', data);
         const newNotebook = data.notebook;
         setNotebooks([newNotebook, ...notebooks]);
         setSelectedNotebook(newNotebook);
         setSuccessMessage('Notebook created successfully!');
       } else if (selectedNotebook) {
+        console.log('Updating notebook:', selectedNotebook.id);
         const data = await notebooksAPI.update(selectedNotebook.id, {
           title: editTitle.trim(),
           content: editContent.trim(),
         });
+        console.log('Notebook updated:', data);
         const updatedNotebook = data.notebook;
         setNotebooks(notebooks.map((n) => (n.id === updatedNotebook.id ? updatedNotebook : n)));
         setSelectedNotebook(updatedNotebook);
@@ -133,6 +153,14 @@ const Notebooks: React.FC = () => {
       setTimeout(() => setSuccessMessage(''), 3000);
     } catch (err: unknown) {
       console.error('Save error:', err);
+      // Check if it's an authentication error
+      if (err && typeof err === 'object' && 'response' in err) {
+        const response = err.response as any;
+        if (response?.status === 401) {
+          navigate('/signin');
+          return;
+        }
+      }
       const errorMessage = err && typeof err === 'object' && 'response' in err &&
         err.response && typeof err.response === 'object' && 'data' in err.response &&
         err.response.data && typeof err.response.data === 'object' && 'error' in err.response.data
