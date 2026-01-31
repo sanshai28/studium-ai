@@ -72,14 +72,6 @@ jobs:
           name: backend-coverage
           fail_ci_if_error: false
 
-      - name: Comment coverage on PR
-        if: github.event_name == 'pull_request'
-        uses: romeovs/lcov-reporter-action@v0.3.1
-        with:
-          lcov-file: ./backend/coverage/lcov.info
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          title: Backend Test Coverage
-
   frontend-tests:
     name: Frontend Tests & Coverage
     runs-on: ubuntu-latest
