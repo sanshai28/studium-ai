@@ -55,6 +55,8 @@ export const createNotebook = async (req: AuthRequest, res: Response) => {
     const userId = req.userId;
     const { title, content } = req.body;
 
+    console.log('createNotebook called:', { userId, title, content });
+
     if (!title || !content) {
       return res.status(400).json({ error: 'Title and content are required' });
     }
@@ -67,8 +69,10 @@ export const createNotebook = async (req: AuthRequest, res: Response) => {
       },
     });
 
+    console.log('Notebook created successfully:', notebook.id);
     res.status(201).json({ notebook });
   } catch (error) {
+    console.error('Error creating notebook:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 };
