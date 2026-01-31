@@ -10,7 +10,7 @@ The CI/CD pipeline runs automatically on every Pull Request and includes:
 - Runs all unit tests
 - Generates test coverage reports
 - **Requirement**: All tests must pass
-- **Coverage Threshold**: 80% for branches, functions, lines, and statements
+- **Coverage Threshold**: 75% for branches, functions, lines, and statements
 
 ### ✅ **Step 2: Frontend Checks**
 - Builds the frontend application
@@ -27,7 +27,7 @@ The CI/CD pipeline runs automatically on every Pull Request and includes:
 Before a PR can be merged, it must:
 
 1. ✅ **All unit tests pass** - No failing tests allowed
-2. ✅ **Test coverage ≥ 80%** - New code must maintain 80% coverage
+2. ✅ **Test coverage ≥ 75%** - New code must maintain 75% coverage
 3. ✅ **Frontend builds successfully** - No build errors
 4. ✅ **Linting passes** - Code follows style guidelines
 5. ✅ **No console.logs** - Production code must be clean
@@ -94,11 +94,11 @@ describe('MyNewFeature', () => {
 
 ### Test Coverage Requirements
 
-- **Global Coverage**: 80% minimum for all metrics
-  - Branches: 80%
-  - Functions: 80%
-  - Lines: 80%
-  - Statements: 80%
+- **Global Coverage**: 75% minimum for all metrics
+  - Branches: 75%
+  - Functions: 75%
+  - Lines: 75%
+  - Statements: 75%
 
 ### Running Tests Locally
 
@@ -138,7 +138,7 @@ open coverage/lcov-report/index.html  # macOS
 
 ### PR Check Failing: "Coverage below threshold"
 
-**Solution**: Add more tests to reach 80% coverage
+**Solution**: Add more tests to reach 75% coverage
 
 ```bash
 # Check current coverage

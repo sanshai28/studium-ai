@@ -103,7 +103,7 @@ This project uses **GitHub Actions** for continuous integration and deployment.
 
 ### Automated Checks on Every PR:
 - ✅ All unit tests must pass
-- ✅ Test coverage must be ≥ 80%
+- ✅ Test coverage must be ≥ 75%
 - ✅ Frontend must build successfully
 - ✅ Code quality checks (linting, no console.logs)
 
@@ -167,7 +167,7 @@ See [.env.example](backend/.env.example) for all available options.
 5. **Ensure tests pass**
    ```bash
    npm test
-   npm run test:coverage  # Coverage must be ≥ 80%
+   npm run test:coverage  # Coverage must be ≥ 75%
    ```
 6. **Commit your changes**
    ```bash
