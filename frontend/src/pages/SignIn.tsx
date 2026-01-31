@@ -19,8 +19,13 @@ const SignIn: React.FC = () => {
     try {
       await signin(email, password);
       navigate('/');
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to sign in. Please try again.');
+    } catch (err: unknown) {
+      const errorMessage = err && typeof err === 'object' && 'response' in err &&
+        err.response && typeof err.response === 'object' && 'data' in err.response &&
+        err.response.data && typeof err.response.data === 'object' && 'error' in err.response.data
+        ? String(err.response.data.error)
+        : 'Failed to sign in. Please try again.';
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }

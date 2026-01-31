@@ -19,8 +19,13 @@ const RequestPasswordReset: React.FC = () => {
       await api.post('/auth/request-password-reset', { email });
       setSuccess(true);
       setEmail('');
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to send reset email. Please try again.');
+    } catch (err: unknown) {
+      const errorMessage = err && typeof err === 'object' && 'response' in err &&
+        err.response && typeof err.response === 'object' && 'data' in err.response &&
+        err.response.data && typeof err.response.data === 'object' && 'error' in err.response.data
+        ? String(err.response.data.error)
+        : 'Failed to send reset email. Please try again.';
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
