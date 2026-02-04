@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import authRoutes from '../../routes/authRoutes';
 import notebookRoutes from '../../routes/notebookRoutes';
+import { errorHandler } from '../../middleware/errorHandler';
 
 export const createTestServer = () => {
   const app = express();
@@ -17,9 +18,12 @@ export const createTestServer = () => {
   app.use('/api/notebooks', notebookRoutes);
   app.use('/api/v1/notebooks', notebookRoutes);
 
-  app.get('/api/health', (req, res) => {
+  app.get('/api/health', (_req, res) => {
     res.json({ status: 'ok', message: 'Server is running' });
   });
+
+  // Global error handler - must be last middleware
+  app.use(errorHandler);
 
   return app;
 };

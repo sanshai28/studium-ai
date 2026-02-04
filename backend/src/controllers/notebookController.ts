@@ -1,133 +1,111 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import prisma from '../utils/prisma';
+import { AuthRequest } from '../types';
+import { NotFoundError, ForbiddenError, BadRequestError } from '../middleware/errorHandler';
 
-interface AuthRequest extends Request {
-  userId?: string;
-}
+export const getAllNotebooks = async (req: AuthRequest, res: Response): Promise<void> => {
+  const userId = req.userId!;
 
-export const getAllNotebooks = async (req: AuthRequest, res: Response) => {
-  try {
-    const userId = req.userId;
+  const notebooks = await prisma.notebook.findMany({
+    where: { userId },
+    orderBy: { updatedAt: 'desc' },
+    select: {
+      id: true,
+      title: true,
+      content: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+  });
 
-    const notebooks = await prisma.notebook.findMany({
-      where: { userId: userId! },
-      orderBy: { updatedAt: 'desc' },
-      select: {
-        id: true,
-        title: true,
-        content: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-    });
-
-    res.json({ notebooks });
-  } catch (error) {
-    res.status(500).json({ error: 'Internal server error' });
-  }
+  res.json({ notebooks });
 };
 
-export const getNotebook = async (req: AuthRequest, res: Response) => {
-  try {
-    const userId = req.userId;
-    const { id } = req.params;
+export const getNotebook = async (req: AuthRequest, res: Response): Promise<void> => {
+  const userId = req.userId!;
+  const id = req.params.id as string;
 
-    const notebook = await prisma.notebook.findUnique({
-      where: { id: id as string },
-    });
+  const notebook = await prisma.notebook.findUnique({
+    where: { id },
+  });
 
-    if (!notebook) {
-      return res.status(404).json({ error: 'Notebook not found' });
-    }
-
-    if (notebook.userId !== userId) {
-      return res.status(403).json({ error: 'Access denied' });
-    }
-
-    res.json({ notebook });
-  } catch (error) {
-    res.status(500).json({ error: 'Internal server error' });
+  if (!notebook) {
+    throw new NotFoundError('Notebook');
   }
+
+  if (notebook.userId !== userId) {
+    throw new ForbiddenError();
+  }
+
+  res.json({ notebook });
 };
 
-export const createNotebook = async (req: AuthRequest, res: Response) => {
-  try {
-    const userId = req.userId;
-    const { title, content } = req.body;
+export const createNotebook = async (req: AuthRequest, res: Response): Promise<void> => {
+  const userId = req.userId!;
+  const { title, content = '' } = req.body;
 
-    if (!title || !content) {
-      return res.status(400).json({ error: 'Title and content are required' });
-    }
-
-    const notebook = await prisma.notebook.create({
-      data: {
-        title,
-        content,
-        userId: userId!,
-      },
-    });
-
-    res.status(201).json({ notebook });
-  } catch (error) {
-    res.status(500).json({ error: 'Internal server error' });
+  if (!title) {
+    throw new BadRequestError('Title is required');
   }
+
+  const notebook = await prisma.notebook.create({
+    data: {
+      title,
+      content,
+      userId,
+    },
+  });
+
+  res.status(201).json({ notebook });
 };
 
-export const updateNotebook = async (req: AuthRequest, res: Response) => {
-  try {
-    const userId = req.userId;
-    const { id } = req.params;
-    const { title, content } = req.body;
+export const updateNotebook = async (req: AuthRequest, res: Response): Promise<void> => {
+  const userId = req.userId!;
+  const id = req.params.id as string;
+  const { title, content } = req.body;
 
-    const notebook = await prisma.notebook.findUnique({
-      where: { id: id as string },
-    });
+  const notebook = await prisma.notebook.findUnique({
+    where: { id },
+  });
 
-    if (!notebook) {
-      return res.status(404).json({ error: 'Notebook not found' });
-    }
-
-    if (notebook.userId !== userId) {
-      return res.status(403).json({ error: 'Access denied' });
-    }
-
-    const updatedNotebook = await prisma.notebook.update({
-      where: { id: id as string },
-      data: {
-        ...(title !== undefined && { title }),
-        ...(content !== undefined && { content }),
-      },
-    });
-
-    res.json({ notebook: updatedNotebook });
-  } catch (error) {
-    res.status(500).json({ error: 'Internal server error' });
+  if (!notebook) {
+    throw new NotFoundError('Notebook');
   }
+
+  if (notebook.userId !== userId) {
+    throw new ForbiddenError();
+  }
+
+  const updatedNotebook = await prisma.notebook.update({
+    where: { id },
+    data: {
+      ...(title !== undefined && { title }),
+      ...(content !== undefined && { content }),
+    },
+  });
+
+  res.json({ notebook: updatedNotebook });
 };
 
-export const deleteNotebook = async (req: AuthRequest, res: Response) => {
-  try {
-    const userId = req.userId;
-    const { id } = req.params;
+export const deleteNotebook = async (req: AuthRequest, res: Response): Promise<void> => {
+  const userId = req.userId!;
+  const id = req.params.id as string;
 
-    const notebook = await prisma.notebook.findUnique({
-      where: { id: id as string },
-    });
+  const notebook = await prisma.notebook.findUnique({
+    where: { id },
+  });
 
-    if (!notebook) {
-      return res.status(404).json({ error: 'Notebook not found' });
-    }
-
-    if (notebook.userId !== userId) {
-      return res.status(403).json({ error: 'Access denied' });
-    }
-
-    await prisma.notebook.delete({
-      where: { id: id as string },
-    });
-
-    res.json({ message: 'Notebook deleted successfully' });
-  } catch (error) {
-    res.status(500).json({ error: 'Internal server error' });
+  if (!notebook) {
+    throw new NotFoundError('Notebook');
   }
+
+  if (notebook.userId !== userId) {
+    throw new ForbiddenError();
+  }
+
+  await prisma.notebook.delete({
+    where: { id },
+  });
+
+  res.json({ message: 'Notebook deleted successfully' });
 };

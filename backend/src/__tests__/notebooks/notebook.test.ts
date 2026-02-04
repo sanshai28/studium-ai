@@ -188,10 +188,11 @@ describe('Notebook CRUD Operations', () => {
         });
 
       expect(response.status).toBe(400);
-      expect(response.body.error).toBe('Title and content are required');
+      expect(response.body.error).toBe('Validation failed');
+      expect(response.body.details).toBeDefined();
     });
 
-    it('should return 400 when content is missing', async () => {
+    it('should create notebook with empty content when content is missing', async () => {
       const response = await request(app)
         .post('/api/notebooks')
         .set('Authorization', `Bearer ${token1}`)
@@ -199,18 +200,19 @@ describe('Notebook CRUD Operations', () => {
           title: 'Title without content',
         });
 
-      expect(response.status).toBe(400);
-      expect(response.body.error).toBe('Title and content are required');
+      expect(response.status).toBe(201);
+      expect(response.body.notebook.title).toBe('Title without content');
+      expect(response.body.notebook.content).toBe('');
     });
 
-    it('should return 400 when both title and content are missing', async () => {
+    it('should return 400 when title is missing from empty body', async () => {
       const response = await request(app)
         .post('/api/notebooks')
         .set('Authorization', `Bearer ${token1}`)
         .send({});
 
       expect(response.status).toBe(400);
-      expect(response.body.error).toBe('Title and content are required');
+      expect(response.body.error).toBe('Validation failed');
     });
 
     it('should return 401 without authentication token', async () => {
