@@ -1,35 +1,36 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { getErrorMessage } from '../utils/errorHandler';
 import '../styles/Auth.css';
 
 const SignIn: React.FC = () => {
+  const navigate = useNavigate();
+  const { signin } = useAuth();
+
+  // State
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const { signin } = useAuth();
-  const navigate = useNavigate();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setIsLoading(true);
+  const handleSubmit = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      setError(null);
+      setIsLoading(true);
 
-    try {
-      await signin(email, password);
-      navigate('/');
-    } catch (err: unknown) {
-      const errorMessage = err && typeof err === 'object' && 'response' in err &&
-        err.response && typeof err.response === 'object' && 'data' in err.response &&
-        err.response.data && typeof err.response.data === 'object' && 'error' in err.response.data
-        ? String(err.response.data.error)
-        : 'Failed to sign in. Please try again.';
-      setError(errorMessage);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+      try {
+        await signin(email, password);
+        navigate('/notebooks');
+      } catch (err) {
+        setError(getErrorMessage(err, 'Failed to sign in. Please try again.'));
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [email, password, signin, navigate]
+  );
 
   return (
     <div className="auth-container">
@@ -49,6 +50,7 @@ const SignIn: React.FC = () => {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Enter your email"
               required
+              disabled={isLoading}
             />
           </div>
 
@@ -61,6 +63,7 @@ const SignIn: React.FC = () => {
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Enter your password"
               required
+              disabled={isLoading}
             />
           </div>
 

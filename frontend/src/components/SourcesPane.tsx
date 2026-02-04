@@ -1,13 +1,8 @@
 import React, { useState, useCallback } from 'react';
 import { sourcesAPI } from '../utils/api';
-
-interface Source {
-  id: string;
-  fileName: string;
-  fileType: string;
-  fileSize: number;
-  uploadedAt: string;
-}
+import { formatSourceDate } from '../utils/formatDate';
+import { formatFileSize, getFileIcon } from '../utils/format';
+import type { Source } from '../types';
 
 interface SourcesPaneProps {
   notebookId: string;
@@ -30,33 +25,39 @@ const SourcesPane: React.FC<SourcesPaneProps> = ({ notebookId, sources, onSource
     setIsDragging(false);
   }, []);
 
-  const uploadFiles = useCallback(async (files: File[]) => {
-    setIsUploading(true);
-    setError(null);
-    try {
-      for (const file of files) {
-        await sourcesAPI.upload(notebookId, file);
+  const uploadFiles = useCallback(
+    async (files: File[]) => {
+      setIsUploading(true);
+      setError(null);
+      try {
+        for (const file of files) {
+          await sourcesAPI.upload(notebookId, file);
+        }
+        onSourcesChange();
+      } catch (err) {
+        console.error('Upload error:', err);
+        setError('Failed to upload file');
+      } finally {
+        setIsUploading(false);
       }
-      onSourcesChange();
-    } catch (err) {
-      console.error('Upload error:', err);
-      setError('Failed to upload file');
-    } finally {
-      setIsUploading(false);
-    }
-  }, [notebookId, onSourcesChange]);
+    },
+    [notebookId, onSourcesChange]
+  );
 
-  const handleDrop = useCallback(async (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-    const files = Array.from(e.dataTransfer.files);
-    await uploadFiles(files);
-  }, [uploadFiles]);
+  const handleDrop = useCallback(
+    async (e: React.DragEvent) => {
+      e.preventDefault();
+      setIsDragging(false);
+      const files = Array.from(e.dataTransfer.files);
+      await uploadFiles(files);
+    },
+    [uploadFiles]
+  );
 
   const handleFileInput = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     await uploadFiles(files);
-    e.target.value = '';
+    e.target.value = ''; // Reset input for re-upload
   };
 
   const handleDelete = async (sourceId: string) => {
@@ -67,32 +68,6 @@ const SourcesPane: React.FC<SourcesPaneProps> = ({ notebookId, sources, onSource
       console.error('Delete error:', err);
       setError('Failed to delete source');
     }
-  };
-
-  const formatFileSize = (bytes: number) => {
-    if (bytes < 1024) return bytes + ' B';
-    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
-  };
-
-  const getFileIcon = (fileType: string) => {
-    if (fileType === 'application/pdf') return '📄';
-    if (fileType.includes('word')) return '📝';
-    if (fileType.startsWith('image/')) return '🖼️';
-    if (fileType === 'text/plain' || fileType === 'text/markdown') return '📃';
-    return '📎';
-  };
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diff = now.getTime() - date.getTime();
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-
-    if (days === 0) return 'Today';
-    if (days === 1) return 'Yesterday';
-    if (days < 7) return `${days} days ago`;
-    return date.toLocaleDateString();
   };
 
   return (
@@ -145,7 +120,7 @@ const SourcesPane: React.FC<SourcesPaneProps> = ({ notebookId, sources, onSource
                   {source.fileName}
                 </span>
                 <span className="source-meta">
-                  {formatFileSize(source.fileSize)} • {formatDate(source.uploadedAt)}
+                  {formatFileSize(source.fileSize)} • {formatSourceDate(source.uploadedAt)}
                 </span>
               </div>
               <button

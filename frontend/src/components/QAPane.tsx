@@ -1,12 +1,6 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { conversationsAPI } from '../utils/api';
-
-interface Message {
-  id: string;
-  role: string;
-  content: string;
-  createdAt: string;
-}
+import type { Message } from '../types';
 
 interface QAPaneProps {
   conversationId: string | null;
@@ -32,39 +26,45 @@ const QAPane: React.FC<QAPaneProps> = ({
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!input.trim() || !conversationId || isLoading) return;
-
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      await conversationsAPI.sendMessage(conversationId, input.trim());
-      setInput('');
-      onMessagesChange();
-    } catch (err) {
-      console.error('Error sending message:', err);
-      setError('Failed to send message. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+  const handleSubmit = useCallback(
+    async (e: React.FormEvent) => {
       e.preventDefault();
-      handleSubmit(e);
-    }
-  };
+      if (!input.trim() || !conversationId || isLoading) return;
 
-  const copyToClipboard = async (content: string) => {
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        await conversationsAPI.sendMessage(conversationId, input.trim());
+        setInput('');
+        onMessagesChange();
+      } catch (err) {
+        console.error('Error sending message:', err);
+        setError('Failed to send message. Please try again.');
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [input, conversationId, isLoading, onMessagesChange]
+  );
+
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        handleSubmit(e);
+      }
+    },
+    [handleSubmit]
+  );
+
+  const copyToClipboard = useCallback(async (content: string) => {
     try {
       await navigator.clipboard.writeText(content);
     } catch (err) {
       console.error('Failed to copy:', err);
     }
-  };
+  }, []);
 
   return (
     <div className="qa-pane">
