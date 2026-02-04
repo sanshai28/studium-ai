@@ -94,7 +94,8 @@ describe('Password Reset Flow', () => {
         .send({})
         .expect(400);
 
-      expect(response.body.error).toBe('Email is required');
+      expect(response.body.error).toBe('Validation failed');
+      expect(response.body.details).toBeDefined();
     });
 
     it('should overwrite previous reset token if requested again', async () => {
@@ -224,7 +225,8 @@ describe('Password Reset Flow', () => {
         })
         .expect(400);
 
-      expect(response.body.error).toBe('Token and new password are required');
+      expect(response.body.error).toBe('Validation failed');
+      expect(response.body.details).toBeDefined();
     });
 
     it('should reject if new password is missing', async () => {
@@ -235,7 +237,8 @@ describe('Password Reset Flow', () => {
         })
         .expect(400);
 
-      expect(response.body.error).toBe('Token and new password are required');
+      expect(response.body.error).toBe('Validation failed');
+      expect(response.body.details).toBeDefined();
     });
 
     it('should reject password shorter than 6 characters', async () => {
@@ -257,7 +260,8 @@ describe('Password Reset Flow', () => {
         })
         .expect(400);
 
-      expect(response.body.error).toBe('Password must be at least 6 characters long');
+      expect(response.body.error).toBe('Validation failed');
+      expect(response.body.details).toBeDefined();
     });
 
     it('should hash the new password with bcrypt', async () => {

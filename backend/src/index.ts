@@ -7,6 +7,7 @@ import sourceRoutes from './routes/sourceRoutes';
 import conversationRoutes from './routes/conversationRoutes';
 import corsOptions from './config/cors.config';
 import clientDetection from './middleware/clientDetection';
+import { errorHandler } from './middleware/errorHandler';
 
 dotenv.config();
 
@@ -30,7 +31,7 @@ app.use('/api/v1', sourceRoutes);
 app.use('/api/v1', conversationRoutes);
 
 // Health check endpoint
-app.get('/api/health', (req, res) => {
+app.get('/api/health', (_req, res) => {
   res.json({
     status: 'ok',
     message: 'Server is running',
@@ -40,7 +41,7 @@ app.get('/api/health', (req, res) => {
 });
 
 // API version info
-app.get('/api/version', (req, res) => {
+app.get('/api/version', (_req, res) => {
   res.json({
     version: '1.0.0',
     apiVersions: ['v1'],
@@ -53,6 +54,9 @@ app.use('/api/auth', authRoutes);
 app.use('/api/notebooks', notebookRoutes);
 app.use('/api', sourceRoutes);
 app.use('/api', conversationRoutes);
+
+// Global error handler - must be last middleware
+app.use(errorHandler);
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);

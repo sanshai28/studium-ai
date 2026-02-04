@@ -3,10 +3,8 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import prisma from '../utils/prisma';
-
-interface AuthRequest extends Request {
-  userId?: string;
-}
+import { AuthRequest } from '../types';
+import { NotFoundError, ForbiddenError, BadRequestError } from '../middleware/errorHandler';
 
 const ALLOWED_TYPES = [
   'application/pdf',
@@ -53,145 +51,109 @@ export const upload = multer({
   limits: { fileSize: MAX_FILE_SIZE },
 });
 
-export const uploadSource = async (req: AuthRequest, res: Response) => {
-  try {
-    const userId = req.userId;
-    const notebookId = req.params.notebookId as string;
+// Helper function to verify notebook ownership
+const verifyNotebookOwnership = async (
+  notebookId: string,
+  userId: string
+): Promise<void> => {
+  const notebook = await prisma.notebook.findUnique({
+    where: { id: notebookId },
+  });
 
-    const notebook = await prisma.notebook.findUnique({
-      where: { id: notebookId },
-    });
+  if (!notebook) {
+    throw new NotFoundError('Notebook');
+  }
 
-    if (!notebook) {
-      return res.status(404).json({ error: 'Notebook not found' });
-    }
-
-    if (notebook.userId !== userId) {
-      return res.status(403).json({ error: 'Access denied' });
-    }
-
-    if (!req.file) {
-      return res.status(400).json({ error: 'No file uploaded' });
-    }
-
-    const source = await prisma.source.create({
-      data: {
-        notebookId,
-        fileName: req.file.originalname,
-        fileType: req.file.mimetype,
-        fileSize: req.file.size,
-        filePath: path.join(notebookId, req.file.filename),
-      },
-    });
-
-    res.status(201).json({ source });
-  } catch (error) {
-    console.error('Error uploading source:', error);
-    res.status(500).json({ error: 'Internal server error' });
+  if (notebook.userId !== userId) {
+    throw new ForbiddenError();
   }
 };
 
-export const getSources = async (req: AuthRequest, res: Response) => {
-  try {
-    const userId = req.userId;
-    const notebookId = req.params.notebookId as string;
+export const uploadSource = async (req: AuthRequest, res: Response): Promise<void> => {
+  const userId = req.userId!;
+  const notebookId = req.params.notebookId as string;
 
-    const notebook = await prisma.notebook.findUnique({
-      where: { id: notebookId },
-    });
+  await verifyNotebookOwnership(notebookId, userId);
 
-    if (!notebook) {
-      return res.status(404).json({ error: 'Notebook not found' });
-    }
-
-    if (notebook.userId !== userId) {
-      return res.status(403).json({ error: 'Access denied' });
-    }
-
-    const sources = await prisma.source.findMany({
-      where: { notebookId },
-      orderBy: { uploadedAt: 'desc' },
-    });
-
-    res.json({ sources });
-  } catch (error) {
-    console.error('Error getting sources:', error);
-    res.status(500).json({ error: 'Internal server error' });
+  if (!req.file) {
+    throw new BadRequestError('No file uploaded');
   }
+
+  const source = await prisma.source.create({
+    data: {
+      notebookId,
+      fileName: req.file.originalname,
+      fileType: req.file.mimetype,
+      fileSize: req.file.size,
+      filePath: path.join(notebookId, req.file.filename),
+    },
+  });
+
+  res.status(201).json({ source });
 };
 
-export const deleteSource = async (req: AuthRequest, res: Response) => {
-  try {
-    const userId = req.userId;
-    const id = req.params.id as string;
+export const getSources = async (req: AuthRequest, res: Response): Promise<void> => {
+  const userId = req.userId!;
+  const notebookId = req.params.notebookId as string;
 
-    const source = await prisma.source.findUnique({
-      where: { id },
-    });
+  await verifyNotebookOwnership(notebookId, userId);
 
-    if (!source) {
-      return res.status(404).json({ error: 'Source not found' });
-    }
+  const sources = await prisma.source.findMany({
+    where: { notebookId },
+    orderBy: { uploadedAt: 'desc' },
+  });
 
-    // Check ownership via notebook
-    const notebook = await prisma.notebook.findUnique({
-      where: { id: source.notebookId },
-    });
-
-    if (!notebook || notebook.userId !== userId) {
-      return res.status(403).json({ error: 'Access denied' });
-    }
-
-    // Delete file from filesystem
-    const filePath = path.join(__dirname, '../../uploads', source.filePath);
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
-    }
-
-    await prisma.source.delete({
-      where: { id },
-    });
-
-    res.json({ message: 'Source deleted successfully' });
-  } catch (error) {
-    console.error('Error deleting source:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
+  res.json({ sources });
 };
 
-export const downloadSource = async (req: AuthRequest, res: Response) => {
-  try {
-    const userId = req.userId;
-    const id = req.params.id as string;
+export const deleteSource = async (req: AuthRequest, res: Response): Promise<void> => {
+  const userId = req.userId!;
+  const id = req.params.id as string;
 
-    const source = await prisma.source.findUnique({
-      where: { id },
-    });
+  const source = await prisma.source.findUnique({
+    where: { id },
+  });
 
-    if (!source) {
-      return res.status(404).json({ error: 'Source not found' });
-    }
-
-    // Check ownership via notebook
-    const notebook = await prisma.notebook.findUnique({
-      where: { id: source.notebookId },
-    });
-
-    if (!notebook || notebook.userId !== userId) {
-      return res.status(403).json({ error: 'Access denied' });
-    }
-
-    const filePath = path.join(__dirname, '../../uploads', source.filePath);
-
-    if (!fs.existsSync(filePath)) {
-      return res.status(404).json({ error: 'File not found on server' });
-    }
-
-    res.setHeader('Content-Disposition', `attachment; filename="${source.fileName}"`);
-    res.setHeader('Content-Type', source.fileType);
-    res.sendFile(filePath);
-  } catch (error) {
-    console.error('Error downloading source:', error);
-    res.status(500).json({ error: 'Internal server error' });
+  if (!source) {
+    throw new NotFoundError('Source');
   }
+
+  await verifyNotebookOwnership(source.notebookId, userId);
+
+  // Delete file from filesystem
+  const filePath = path.join(__dirname, '../../uploads', source.filePath);
+  if (fs.existsSync(filePath)) {
+    fs.unlinkSync(filePath);
+  }
+
+  await prisma.source.delete({
+    where: { id },
+  });
+
+  res.json({ message: 'Source deleted successfully' });
+};
+
+export const downloadSource = async (req: AuthRequest, res: Response): Promise<void> => {
+  const userId = req.userId!;
+  const id = req.params.id as string;
+
+  const source = await prisma.source.findUnique({
+    where: { id },
+  });
+
+  if (!source) {
+    throw new NotFoundError('Source');
+  }
+
+  await verifyNotebookOwnership(source.notebookId, userId);
+
+  const filePath = path.join(__dirname, '../../uploads', source.filePath);
+
+  if (!fs.existsSync(filePath)) {
+    throw new NotFoundError('File');
+  }
+
+  res.setHeader('Content-Disposition', `attachment; filename="${source.fileName}"`);
+  res.setHeader('Content-Type', source.fileType);
+  res.sendFile(filePath);
 };
