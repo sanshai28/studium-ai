@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { notebooksAPI, sourcesAPI, conversationsAPI } from '../utils/api';
 import { useAuth } from '../contexts/AuthContext';
 import SourcesPane from '../components/SourcesPane';
@@ -38,10 +38,9 @@ interface Conversation {
 }
 
 const Notebooks: React.FC = () => {
-  const [notebooks, setNotebooks] = useState<Notebook[]>([]);
-  const [selectedNotebook, setSelectedNotebook] = useState<Notebook | null>(null);
+  const { notebookId } = useParams<{ notebookId: string }>();
+  const [notebook, setNotebook] = useState<Notebook | null>(null);
   const [sources, setSources] = useState<Source[]>([]);
-  const [, setConversations] = useState<Conversation[]>([]);
   const [activeConversation, setActiveConversation] = useState<Conversation | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [notesContent, setNotesContent] = useState('');
@@ -49,70 +48,49 @@ const Notebooks: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [error, setError] = useState('');
-  const [searchQuery, setSearchQuery] = useState('');
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleInput, setTitleInput] = useState('');
   const navigate = useNavigate();
   const { user } = useAuth();
 
   useEffect(() => {
-    loadNotebooks();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
-    if (selectedNotebook && selectedNotebook.id !== 'new') {
-      loadNotebookData(selectedNotebook.id);
+    if (notebookId) {
+      loadNotebook(notebookId);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedNotebook?.id]);
+  }, [notebookId]);
 
-  const loadNotebooks = async () => {
+  const loadNotebook = async (id: string) => {
     try {
       setIsLoading(true);
       setError('');
-      const data = await notebooksAPI.getAll();
-      setNotebooks(data.notebooks);
-      if (data.notebooks.length > 0 && !selectedNotebook) {
-        setSelectedNotebook(data.notebooks[0]);
-      }
-    } catch (err: unknown) {
-      console.error('Load notebooks error:', err);
-      setError('Failed to load notebooks');
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
-  const loadNotebookData = async (notebookId: string) => {
-    try {
+      // Load notebook details
+      const notebookData = await notebooksAPI.getOne(id);
+      setNotebook(notebookData.notebook);
+      setNotesContent(notebookData.notebook.content);
+
       // Load sources
-      const sourcesData = await sourcesAPI.getAll(notebookId);
+      const sourcesData = await sourcesAPI.getAll(id);
       setSources(sourcesData.sources || []);
 
-      // Load conversations
-      const convsData = await conversationsAPI.getAll(notebookId);
+      // Load or create conversation
+      const convsData = await conversationsAPI.getAll(id);
       const convs = convsData.conversations || [];
-      setConversations(convs);
 
-      // Set active conversation or create one
       if (convs.length > 0) {
         setActiveConversation(convs[0]);
         loadMessages(convs[0].id);
       } else {
-        // Create a new conversation for this notebook
-        const newConvData = await conversationsAPI.create(notebookId);
+        const newConvData = await conversationsAPI.create(id);
         setActiveConversation(newConvData.conversation);
-        setConversations([newConvData.conversation]);
         setMessages([]);
       }
-
-      // Set notes content
-      if (selectedNotebook) {
-        setNotesContent(selectedNotebook.content);
-      }
-    } catch (err) {
-      console.error('Error loading notebook data:', err);
+    } catch (err: unknown) {
+      console.error('Load notebook error:', err);
+      setError('Failed to load notebook');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -125,40 +103,12 @@ const Notebooks: React.FC = () => {
     }
   };
 
-  const handleSelectNotebook = (notebook: Notebook) => {
-    setSelectedNotebook(notebook);
-    setNotesContent(notebook.content);
-    setMessages([]);
-    setSources([]);
-    setActiveConversation(null);
-  };
-
-  const handleCreateNew = async () => {
-    try {
-      const data = await notebooksAPI.create({
-        title: 'Untitled Notebook',
-        content: '',
-      });
-      const newNotebook = data.notebook;
-      setNotebooks([newNotebook, ...notebooks]);
-      setSelectedNotebook(newNotebook);
-      setNotesContent('');
-      setEditingTitle(true);
-      setTitleInput('Untitled Notebook');
-    } catch (err) {
-      console.error('Create notebook error:', err);
-      setError('Failed to create notebook');
-    }
-  };
-
   const handleTitleSave = async () => {
-    if (!selectedNotebook || !titleInput.trim()) return;
+    if (!notebook || !titleInput.trim()) return;
 
     try {
-      const data = await notebooksAPI.update(selectedNotebook.id, { title: titleInput });
-      const updatedNotebook = data.notebook;
-      setNotebooks(notebooks.map((n) => (n.id === updatedNotebook.id ? updatedNotebook : n)));
-      setSelectedNotebook(updatedNotebook);
+      const data = await notebooksAPI.update(notebook.id, { title: titleInput });
+      setNotebook(data.notebook);
       setEditingTitle(false);
     } catch (err) {
       console.error('Update title error:', err);
@@ -166,30 +116,25 @@ const Notebooks: React.FC = () => {
   };
 
   const handleSaveNotes = useCallback(async () => {
-    if (!selectedNotebook || selectedNotebook.id === 'new') return;
+    if (!notebook) return;
 
     try {
       setIsSaving(true);
-      await notebooksAPI.update(selectedNotebook.id, { content: notesContent });
+      await notebooksAPI.update(notebook.id, { content: notesContent });
       setLastSaved(new Date());
-
-      // Update local state
-      setNotebooks((prev) =>
-        prev.map((n) =>
-          n.id === selectedNotebook.id ? { ...n, content: notesContent } : n
-        )
-      );
-      setSelectedNotebook((prev) => (prev ? { ...prev, content: notesContent } : prev));
+      setNotebook((prev) => (prev ? { ...prev, content: notesContent } : prev));
     } catch (err) {
       console.error('Save notes error:', err);
     } finally {
       setIsSaving(false);
     }
-  }, [selectedNotebook, notesContent]);
+  }, [notebook, notesContent]);
 
   const handleSourcesChange = () => {
-    if (selectedNotebook && selectedNotebook.id !== 'new') {
-      loadNotebookData(selectedNotebook.id);
+    if (notebookId) {
+      sourcesAPI.getAll(notebookId).then((data) => {
+        setSources(data.sources || []);
+      });
     }
   };
 
@@ -205,17 +150,15 @@ const Notebooks: React.FC = () => {
   };
 
   const handleDelete = async () => {
-    if (!selectedNotebook || selectedNotebook.id === 'new') return;
+    if (!notebook) return;
 
-    if (!window.confirm(`Delete "${selectedNotebook.title}"?`)) {
+    if (!window.confirm(`Delete "${notebook.title}"? This cannot be undone.`)) {
       return;
     }
 
     try {
-      await notebooksAPI.delete(selectedNotebook.id);
-      const updatedNotebooks = notebooks.filter((n) => n.id !== selectedNotebook.id);
-      setNotebooks(updatedNotebooks);
-      setSelectedNotebook(updatedNotebooks[0] || null);
+      await notebooksAPI.delete(notebook.id);
+      navigate('/notebooks');
     } catch (err) {
       console.error('Delete notebook error:', err);
       setError('Failed to delete notebook');
@@ -238,91 +181,76 @@ const Notebooks: React.FC = () => {
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
 
-  const filteredNotebooks = notebooks.filter(
-    (notebook) =>
-      notebook.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      notebook.content.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  const getPreview = (content: string) => {
-    return content.length > 80 ? content.substring(0, 80) + '...' : content;
-  };
-
   if (isLoading) {
     return (
       <div className="notebook-app">
         <div className="loading-container">
           <div className="loading-spinner"></div>
-          <p>Loading your notebooks...</p>
+          <p>Loading notebook...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!notebook) {
+    return (
+      <div className="notebook-app">
+        <div className="error-container">
+          <div className="error-icon">📓</div>
+          <h2>Notebook not found</h2>
+          <p>The notebook you're looking for doesn't exist or you don't have access.</p>
+          <button className="btn-back-home" onClick={() => navigate('/notebooks')}>
+            Back to Dashboard
+          </button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="notebook-app">
-      {/* Sidebar */}
-      <div className="notebook-sidebar">
-        <div className="sidebar-header">
-          <div className="app-branding">
-            <div className="app-icon">📔</div>
-            <h2>Notebooks</h2>
-          </div>
-          <button className="btn-icon" onClick={() => navigate('/')} title="Home">
-            <span>🏠</span>
+    <div className="notebook-app notebook-editor-view">
+      {/* Header */}
+      <div className="editor-header">
+        <div className="header-left">
+          <button className="btn-back" onClick={() => navigate('/notebooks')} title="Back to notebooks">
+            ←
           </button>
-        </div>
-
-        <div className="sidebar-search">
-          <input
-            type="text"
-            placeholder="Search notebooks..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="search-input"
-          />
-        </div>
-
-        <button className="btn-new-notebook-sidebar" onClick={handleCreateNew}>
-          <span className="btn-icon-plus">+</span>
-          New Notebook
-        </button>
-
-        <div className="notebook-list">
-          {filteredNotebooks.length === 0 && searchQuery && (
-            <div className="empty-search">No notebooks found</div>
-          )}
-          {filteredNotebooks.length === 0 && !searchQuery && (
-            <div className="empty-search">
-              <p>No notebooks yet</p>
-              <p className="empty-subtitle">Create your first notebook</p>
-            </div>
-          )}
-          {filteredNotebooks.map((notebook) => (
-            <div
-              key={notebook.id}
-              className={`notebook-item ${selectedNotebook?.id === notebook.id ? 'active' : ''}`}
-              onClick={() => handleSelectNotebook(notebook)}
-            >
-              <div className="notebook-item-header">
-                <h3>{notebook.title}</h3>
-                <span className="notebook-item-date">{formatDate(notebook.updatedAt)}</span>
-              </div>
-              <p className="notebook-item-preview">{getPreview(notebook.content)}</p>
-            </div>
-          ))}
-        </div>
-
-        <div className="sidebar-footer">
-          <div className="user-info">
-            <div className="user-avatar">
-              {user?.name?.charAt(0) || user?.email?.charAt(0) || 'U'}
-            </div>
-            <div className="user-details">
-              <div className="user-name">{user?.name || 'User'}</div>
-              <div className="user-email">{user?.email}</div>
-            </div>
+          <div className="header-branding">
+            <span className="branding-icon">📔</span>
+            <span className="branding-text">NotebookLM</span>
           </div>
+        </div>
+        <div className="header-center">
+          {editingTitle ? (
+            <input
+              type="text"
+              className="header-title-input"
+              value={titleInput}
+              onChange={(e) => setTitleInput(e.target.value)}
+              onBlur={handleTitleSave}
+              onKeyDown={(e) => e.key === 'Enter' && handleTitleSave()}
+              autoFocus
+            />
+          ) : (
+            <h1
+              className="header-title"
+              onClick={() => {
+                setEditingTitle(true);
+                setTitleInput(notebook.title);
+              }}
+            >
+              {notebook.title}
+            </h1>
+          )}
+        </div>
+        <div className="header-right">
+          <span className="last-edited">Edited {formatDate(notebook.updatedAt)}</span>
+          <div className="user-avatar-small">
+            {user?.name?.charAt(0) || user?.email?.charAt(0) || 'U'}
+          </div>
+          <button className="btn-delete-header" onClick={handleDelete} title="Delete notebook">
+            🗑️
+          </button>
         </div>
       </div>
 
@@ -337,79 +265,29 @@ const Notebooks: React.FC = () => {
           </div>
         )}
 
-        {!selectedNotebook && notebooks.length === 0 ? (
-          <div className="empty-main full-width">
-            <div className="empty-icon">📝</div>
-            <h2>Welcome to Notebooks</h2>
-            <p>Create your first notebook to start organizing your thoughts and ideas</p>
-            <button className="btn-create-first-large" onClick={handleCreateNew}>
-              Create Notebook
-            </button>
-          </div>
-        ) : !selectedNotebook ? (
-          <div className="empty-main full-width">
-            <div className="empty-icon">👈</div>
-            <p>Select a notebook from the sidebar</p>
-          </div>
-        ) : (
-          <>
-            {/* Notebook Header */}
-            <div className="notebook-header">
-              {editingTitle ? (
-                <input
-                  type="text"
-                  className="title-input"
-                  value={titleInput}
-                  onChange={(e) => setTitleInput(e.target.value)}
-                  onBlur={handleTitleSave}
-                  onKeyDown={(e) => e.key === 'Enter' && handleTitleSave()}
-                  autoFocus
-                />
-              ) : (
-                <h1
-                  className="notebook-title"
-                  onClick={() => {
-                    setEditingTitle(true);
-                    setTitleInput(selectedNotebook.title);
-                  }}
-                >
-                  {selectedNotebook.title}
-                </h1>
-              )}
-              <div className="notebook-actions">
-                <span className="last-edited">Edited {formatDate(selectedNotebook.updatedAt)}</span>
-                <button className="btn-delete" onClick={handleDelete}>
-                  Delete
-                </button>
-              </div>
-            </div>
+        <div className="panes-container">
+          <SourcesPane
+            notebookId={notebook.id}
+            sources={sources}
+            onSourcesChange={handleSourcesChange}
+          />
 
-            {/* Three Panes */}
-            <div className="panes-container">
-              <SourcesPane
-                notebookId={selectedNotebook.id}
-                sources={sources}
-                onSourcesChange={handleSourcesChange}
-              />
+          <QAPane
+            conversationId={activeConversation?.id || null}
+            messages={messages}
+            onMessagesChange={handleMessagesChange}
+            onAddToNotes={handleAddToNotes}
+            hasNoSources={sources.length === 0}
+          />
 
-              <QAPane
-                conversationId={activeConversation?.id || null}
-                messages={messages}
-                onMessagesChange={handleMessagesChange}
-                onAddToNotes={handleAddToNotes}
-                hasNoSources={sources.length === 0}
-              />
-
-              <NotesPane
-                content={notesContent}
-                onContentChange={setNotesContent}
-                onSave={handleSaveNotes}
-                isSaving={isSaving}
-                lastSaved={lastSaved}
-              />
-            </div>
-          </>
-        )}
+          <NotesPane
+            content={notesContent}
+            onContentChange={setNotesContent}
+            onSave={handleSaveNotes}
+            isSaving={isSaving}
+            lastSaved={lastSaved}
+          />
+        </div>
       </div>
     </div>
   );
