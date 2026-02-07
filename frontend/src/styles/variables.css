@@ -1,0 +1,190 @@
+/**
+ * Design System Variables
+ * World-class, premium design tokens
+ */
+
+:root {
+  /* ========================================
+     PRIMARY PALETTE
+     ======================================== */
+  --color-primary: #667eea;
+  --color-primary-dark: #5a67d8;
+  --color-primary-light: #818cf8;
+  --color-primary-lighter: #a5b4fc;
+  --color-secondary: #764ba2;
+  --color-secondary-light: #9f7aea;
+
+  /* Gradient definitions */
+  --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --gradient-primary-hover: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
+  --gradient-shine: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, transparent 50%, rgba(255,255,255,0.1) 100%);
+
+  /* ========================================
+     SEMANTIC COLORS
+     ======================================== */
+  --color-success: #10b981;
+  --color-success-light: #d1fae5;
+  --color-warning: #f59e0b;
+  --color-warning-light: #fef3c7;
+  --color-error: #ef4444;
+  --color-error-light: #fee2e2;
+  --color-info: #3b82f6;
+  --color-info-dark: #2563eb;
+  --color-info-light: #dbeafe;
+
+  /* ========================================
+     NEUTRAL PALETTE
+     ======================================== */
+  --color-text-primary: #1f2937;
+  --color-text-secondary: #4b5563;
+  --color-text-tertiary: #9ca3af;
+  --color-background: #f9fafb;
+  --color-background-secondary: #f3f4f6;
+  --color-surface: #ffffff;
+  --color-surface-elevated: #ffffff;
+  --color-border: #e5e7eb;
+  --color-border-light: #f3f4f6;
+  --color-hover: rgba(0, 0, 0, 0.04);
+  --color-active: rgba(0, 0, 0, 0.08);
+
+  /* ========================================
+     CARD HEADER COLORS (Vibrant)
+     ======================================== */
+  --card-blue: #3b82f6;
+  --card-red: #ef4444;
+  --card-yellow: #f59e0b;
+  --card-green: #10b981;
+  --card-orange: #f97316;
+  --card-teal: #14b8a6;
+  --card-purple: #8b5cf6;
+  --card-indigo: #6366f1;
+  --card-pink: #ec4899;
+
+  /* ========================================
+     TYPOGRAPHY
+     ======================================== */
+  --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
+
+  /* Font weights */
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /* Letter spacing */
+  --letter-spacing-tight: -0.025em;
+  --letter-spacing-normal: 0;
+  --letter-spacing-wide: 0.025em;
+
+  /* ========================================
+     SPACING SYSTEM (4px grid)
+     ======================================== */
+  --space-0: 0;
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+  --space-20: 5rem;
+  --space-24: 6rem;
+
+  /* ========================================
+     BORDER RADIUS
+     ======================================== */
+  --radius-none: 0;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+  --radius-2xl: 24px;
+  --radius-3xl: 32px;
+  --radius-full: 9999px;
+
+  /* ========================================
+     SHADOWS & ELEVATION (Premium)
+     ======================================== */
+  /* Subtle shadows for cards at rest */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06),
+               0 1px 2px rgba(0, 0, 0, 0.04);
+
+  /* Medium elevation - for hover states */
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.07),
+               0 2px 4px -1px rgba(0, 0, 0, 0.04);
+
+  /* High elevation - for dropdowns, popovers */
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08),
+               0 4px 6px -2px rgba(0, 0, 0, 0.04);
+
+  /* Maximum elevation - for modals */
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
+               0 10px 10px -5px rgba(0, 0, 0, 0.04);
+
+  --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+
+  /* Colored shadows for buttons */
+  --shadow-primary: 0 4px 14px rgba(102, 126, 234, 0.35);
+  --shadow-primary-lg: 0 8px 24px rgba(102, 126, 234, 0.4);
+  --shadow-info: 0 4px 14px rgba(59, 130, 246, 0.35);
+  --shadow-info-lg: 0 8px 24px rgba(59, 130, 246, 0.4);
+  --shadow-error: 0 4px 14px rgba(239, 68, 68, 0.35);
+
+  /* Focus rings */
+  --shadow-focus: 0 0 0 3px rgba(102, 126, 234, 0.4);
+  --shadow-focus-error: 0 0 0 3px rgba(239, 68, 68, 0.3);
+  --shadow-focus-info: 0 0 0 3px rgba(59, 130, 246, 0.4);
+
+  /* Inner shadows */
+  --shadow-inner: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+
+  /* ========================================
+     GLASSMORPHISM
+     ======================================== */
+  --glass-bg: rgba(255, 255, 255, 0.8);
+  --glass-bg-strong: rgba(255, 255, 255, 0.95);
+  --glass-border: rgba(255, 255, 255, 0.3);
+  --glass-blur: blur(20px);
+  --glass-blur-strong: blur(40px);
+
+  /* ========================================
+     ANIMATION TIMING FUNCTIONS
+     ======================================== */
+  --ease-linear: linear;
+  --ease-default: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-spring: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  --ease-elastic: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+
+  /* ========================================
+     ANIMATION DURATION
+     ======================================== */
+  --duration-instant: 50ms;
+  --duration-fast: 100ms;
+  --duration-normal: 200ms;
+  --duration-slow: 300ms;
+  --duration-slower: 400ms;
+  --duration-slowest: 500ms;
+
+  /* ========================================
+     Z-INDEX SCALE
+     ======================================== */
+  --z-base: 0;
+  --z-dropdown: 100;
+  --z-sticky: 200;
+  --z-fixed: 300;
+  --z-modal-backdrop: 400;
+  --z-modal: 500;
+  --z-popover: 600;
+  --z-tooltip: 700;
+  --z-toast: 800;
+}

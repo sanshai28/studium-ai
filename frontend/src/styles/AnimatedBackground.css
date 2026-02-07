@@ -3,13 +3,13 @@
    World-class animations for auth and dashboard pages
    ===================================================== */
 
-/* CSS Custom Properties */
+/* Local CSS Custom Properties - reference global variables */
 :root {
-  --aurora-primary: #667eea;
-  --aurora-secondary: #764ba2;
+  --aurora-primary: var(--color-primary, #667eea);
+  --aurora-secondary: var(--color-secondary, #764ba2);
   --aurora-accent-1: #6366f1;
-  --aurora-accent-2: #a855f7;
-  --aurora-accent-3: #818cf8;
+  --aurora-accent-2: var(--card-purple, #a855f7);
+  --aurora-accent-3: var(--color-primary-light, #818cf8);
   --particle-color-1: #e0e7ff;
   --particle-color-2: #c7d2fe;
   --particle-color-3: #ddd6fe;
@@ -317,5 +317,5 @@
 }
 
 .animated-bg--static.animated-bg--dashboard {
-  background: #f8f9fa;
+  background: var(--color-background, #f8f9fa);
 }
