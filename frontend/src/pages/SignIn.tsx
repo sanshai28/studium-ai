@@ -2,6 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { getErrorMessage } from '../utils/errorHandler';
+import { AnimatedBackground } from '../components/backgrounds';
 import '../styles/Auth.css';
 
 const SignIn: React.FC = () => {
@@ -34,6 +35,7 @@ const SignIn: React.FC = () => {
 
   return (
     <div className="auth-container">
+      <AnimatedBackground variant="auth" />
       <div className="auth-card">
         <h1>Welcome Back</h1>
         <p className="auth-subtitle">Sign in to continue your learning</p>

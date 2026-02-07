@@ -1,0 +1,321 @@
+/* =====================================================
+   Animated Background Styles
+   World-class animations for auth and dashboard pages
+   ===================================================== */
+
+/* CSS Custom Properties */
+:root {
+  --aurora-primary: #667eea;
+  --aurora-secondary: #764ba2;
+  --aurora-accent-1: #6366f1;
+  --aurora-accent-2: #a855f7;
+  --aurora-accent-3: #818cf8;
+  --particle-color-1: #e0e7ff;
+  --particle-color-2: #c7d2fe;
+  --particle-color-3: #ddd6fe;
+}
+
+/* =====================================================
+   Gradient Mesh Background (Auth Pages)
+   ===================================================== */
+
+.gradient-mesh-bg {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  z-index: 0;
+}
+
+/* Animated mesh gradient base */
+.gradient-mesh-bg__mesh {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 60% at 20% 30%, rgba(102, 126, 234, 0.5) 0%, transparent 50%),
+    radial-gradient(ellipse 60% 80% at 80% 70%, rgba(118, 75, 162, 0.5) 0%, transparent 50%),
+    radial-gradient(ellipse 70% 70% at 50% 50%, rgba(99, 102, 241, 0.4) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 50% at 70% 20%, rgba(168, 85, 247, 0.3) 0%, transparent 50%),
+    linear-gradient(135deg, var(--aurora-primary) 0%, var(--aurora-secondary) 100%);
+  background-size: 200% 200%, 200% 200%, 200% 200%, 200% 200%, 100% 100%;
+  animation: meshShift 20s ease-in-out infinite;
+}
+
+/* Floating orbs */
+.gradient-mesh-bg__orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(60px);
+  opacity: 0.7;
+  will-change: transform;
+}
+
+.gradient-mesh-bg__orb--1 {
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(102, 126, 234, 0.8) 0%, transparent 70%);
+  top: -10%;
+  left: -5%;
+  animation: float1 18s ease-in-out infinite;
+}
+
+.gradient-mesh-bg__orb--2 {
+  width: 350px;
+  height: 350px;
+  background: radial-gradient(circle, rgba(168, 85, 247, 0.7) 0%, transparent 70%);
+  top: 60%;
+  right: -10%;
+  animation: float2 22s ease-in-out infinite;
+}
+
+.gradient-mesh-bg__orb--3 {
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.6) 0%, transparent 70%);
+  bottom: -5%;
+  left: 20%;
+  animation: float3 20s ease-in-out infinite;
+}
+
+.gradient-mesh-bg__orb--4 {
+  width: 250px;
+  height: 250px;
+  background: radial-gradient(circle, rgba(129, 140, 248, 0.6) 0%, transparent 70%);
+  top: 20%;
+  right: 25%;
+  animation: float4 24s ease-in-out infinite;
+}
+
+.gradient-mesh-bg__orb--5 {
+  width: 200px;
+  height: 200px;
+  background: radial-gradient(circle, rgba(118, 75, 162, 0.5) 0%, transparent 70%);
+  bottom: 30%;
+  left: 50%;
+  animation: float5 16s ease-in-out infinite;
+}
+
+/* Center glow pulse */
+.gradient-mesh-bg__glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 600px;
+  height: 600px;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 60%);
+  animation: pulse 8s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* =====================================================
+   Particle Background (Dashboard)
+   ===================================================== */
+
+.particle-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.particle-bg__canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* =====================================================
+   Keyframe Animations
+   ===================================================== */
+
+/* Mesh gradient shift */
+@keyframes meshShift {
+  0%, 100% {
+    background-position: 0% 50%, 100% 50%, 50% 50%, 80% 20%, 0% 0%;
+  }
+  25% {
+    background-position: 50% 0%, 50% 100%, 100% 50%, 20% 80%, 0% 0%;
+  }
+  50% {
+    background-position: 100% 50%, 0% 50%, 50% 100%, 50% 50%, 0% 0%;
+  }
+  75% {
+    background-position: 50% 100%, 50% 0%, 0% 50%, 80% 20%, 0% 0%;
+  }
+}
+
+/* Orb floating animations with different paths */
+@keyframes float1 {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+  }
+  25% {
+    transform: translate(30px, 50px) scale(1.05);
+  }
+  50% {
+    transform: translate(60px, 20px) scale(0.95);
+  }
+  75% {
+    transform: translate(20px, -30px) scale(1.02);
+  }
+}
+
+@keyframes float2 {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+  }
+  25% {
+    transform: translate(-40px, -30px) scale(1.08);
+  }
+  50% {
+    transform: translate(-20px, 40px) scale(0.92);
+  }
+  75% {
+    transform: translate(-50px, 10px) scale(1.04);
+  }
+}
+
+@keyframes float3 {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+  }
+  25% {
+    transform: translate(50px, -20px) scale(0.96);
+  }
+  50% {
+    transform: translate(20px, -50px) scale(1.06);
+  }
+  75% {
+    transform: translate(-30px, -30px) scale(0.98);
+  }
+}
+
+@keyframes float4 {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+  }
+  25% {
+    transform: translate(-20px, 40px) scale(1.04);
+  }
+  50% {
+    transform: translate(-40px, 20px) scale(0.94);
+  }
+  75% {
+    transform: translate(10px, 50px) scale(1.02);
+  }
+}
+
+@keyframes float5 {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+  }
+  25% {
+    transform: translate(40px, 20px) scale(0.95);
+  }
+  50% {
+    transform: translate(20px, -40px) scale(1.08);
+  }
+  75% {
+    transform: translate(-30px, -10px) scale(0.97);
+  }
+}
+
+/* Center glow pulse */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 0.3;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: translate(-50%, -50%) scale(1.1);
+  }
+}
+
+/* =====================================================
+   Responsive Adjustments
+   ===================================================== */
+
+@media (max-width: 768px) {
+  /* Reduce orb sizes and hide some on mobile */
+  .gradient-mesh-bg__orb--1 {
+    width: 250px;
+    height: 250px;
+  }
+
+  .gradient-mesh-bg__orb--2 {
+    width: 200px;
+    height: 200px;
+  }
+
+  .gradient-mesh-bg__orb--3 {
+    width: 180px;
+    height: 180px;
+  }
+
+  /* Hide orbs 4 and 5 on mobile for better performance */
+  .gradient-mesh-bg__orb--4,
+  .gradient-mesh-bg__orb--5 {
+    display: none;
+  }
+
+  /* Reduce blur for better mobile performance */
+  .gradient-mesh-bg__orb {
+    filter: blur(40px);
+  }
+
+  /* Slower animations on mobile */
+  .gradient-mesh-bg__mesh {
+    animation-duration: 30s;
+  }
+}
+
+@media (max-width: 480px) {
+  .gradient-mesh-bg__orb--1 {
+    width: 180px;
+    height: 180px;
+  }
+
+  .gradient-mesh-bg__orb--2 {
+    width: 150px;
+    height: 150px;
+  }
+
+  .gradient-mesh-bg__orb--3 {
+    display: none;
+  }
+
+  .gradient-mesh-bg__glow {
+    width: 300px;
+    height: 300px;
+  }
+}
+
+/* =====================================================
+   Reduced Motion Support
+   ===================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .gradient-mesh-bg__mesh,
+  .gradient-mesh-bg__orb,
+  .gradient-mesh-bg__glow {
+    animation: none;
+  }
+
+  /* Show static background */
+  .gradient-mesh-bg__mesh {
+    background-position: 50% 50%, 50% 50%, 50% 50%, 50% 50%, 0% 0%;
+  }
+}
+
+/* =====================================================
+   Static Fallback
+   ===================================================== */
+
+.animated-bg--static {
+  background: linear-gradient(135deg, var(--aurora-primary) 0%, var(--aurora-secondary) 100%);
+}
+
+.animated-bg--static.animated-bg--dashboard {
+  background: #f8f9fa;
+}

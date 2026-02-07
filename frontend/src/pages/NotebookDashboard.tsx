@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { notebooksAPI } from '../utils/api';
 import { useAuth } from '../contexts/AuthContext';
 import NotebookCard from '../components/NotebookCard';
+import { AnimatedBackground } from '../components/backgrounds';
 import type { Notebook } from '../types';
 import '../styles/NotebookDashboard.css';
 
@@ -142,6 +143,7 @@ const NotebookDashboard: React.FC = () => {
 
   return (
     <div className="dashboard">
+      <AnimatedBackground variant="dashboard" />
       {/* Header */}
       <header className="dashboard-header">
         <div className="header-left">
