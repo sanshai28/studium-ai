@@ -2,43 +2,19 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { notebooksAPI, sourcesAPI, conversationsAPI } from '../utils/api';
 import { useAuth } from '../contexts/AuthContext';
+import { formatRelativeTime } from '../utils/formatDate';
 import SourcesPane from '../components/SourcesPane';
 import QAPane from '../components/QAPane';
 import NotesPane from '../components/NotesPane';
+import type { Notebook, Source, Message, Conversation } from '../types';
 import '../styles/Notebooks.css';
-
-interface Notebook {
-  id: string;
-  title: string;
-  content: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface Source {
-  id: string;
-  fileName: string;
-  fileType: string;
-  fileSize: number;
-  uploadedAt: string;
-}
-
-interface Message {
-  id: string;
-  role: string;
-  content: string;
-  createdAt: string;
-}
-
-interface Conversation {
-  id: string;
-  notebookId: string;
-  createdAt: string;
-  updatedAt: string;
-}
 
 const Notebooks: React.FC = () => {
   const { notebookId } = useParams<{ notebookId: string }>();
+  const navigate = useNavigate();
+  const { user } = useAuth();
+
+  // State
   const [notebook, setNotebook] = useState<Notebook | null>(null);
   const [sources, setSources] = useState<Source[]>([]);
   const [activeConversation, setActiveConversation] = useState<Conversation | null>(null);
@@ -47,12 +23,11 @@ const Notebooks: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
-  const [error, setError] = useState('');
+  const [error, setError] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleInput, setTitleInput] = useState('');
-  const navigate = useNavigate();
-  const { user } = useAuth();
 
+  // Load notebook data on mount or notebookId change
   useEffect(() => {
     if (notebookId) {
       loadNotebook(notebookId);
@@ -63,7 +38,7 @@ const Notebooks: React.FC = () => {
   const loadNotebook = async (id: string) => {
     try {
       setIsLoading(true);
-      setError('');
+      setError(null);
 
       // Load notebook details
       const notebookData = await notebooksAPI.getOne(id);
@@ -86,7 +61,7 @@ const Notebooks: React.FC = () => {
         setActiveConversation(newConvData.conversation);
         setMessages([]);
       }
-    } catch (err: unknown) {
+    } catch (err) {
       console.error('Load notebook error:', err);
       setError('Failed to load notebook');
     } finally {
@@ -103,7 +78,7 @@ const Notebooks: React.FC = () => {
     }
   };
 
-  const handleTitleSave = async () => {
+  const handleTitleSave = useCallback(async () => {
     if (!notebook || !titleInput.trim()) return;
 
     try {
@@ -113,7 +88,7 @@ const Notebooks: React.FC = () => {
     } catch (err) {
       console.error('Update title error:', err);
     }
-  };
+  }, [notebook, titleInput]);
 
   const handleSaveNotes = useCallback(async () => {
     if (!notebook) return;
@@ -130,26 +105,29 @@ const Notebooks: React.FC = () => {
     }
   }, [notebook, notesContent]);
 
-  const handleSourcesChange = () => {
+  const handleSourcesChange = useCallback(() => {
     if (notebookId) {
       sourcesAPI.getAll(notebookId).then((data) => {
         setSources(data.sources || []);
       });
     }
-  };
+  }, [notebookId]);
 
-  const handleMessagesChange = () => {
+  const handleMessagesChange = useCallback(() => {
     if (activeConversation) {
       loadMessages(activeConversation.id);
     }
-  };
+  }, [activeConversation]);
 
-  const handleAddToNotes = (content: string) => {
-    const separator = notesContent ? '\n\n---\n\n' : '';
-    setNotesContent(notesContent + separator + content);
-  };
+  const handleAddToNotes = useCallback(
+    (content: string) => {
+      const separator = notesContent ? '\n\n---\n\n' : '';
+      setNotesContent(notesContent + separator + content);
+    },
+    [notesContent]
+  );
 
-  const handleDelete = async () => {
+  const handleDelete = useCallback(async () => {
     if (!notebook) return;
 
     if (!window.confirm(`Delete "${notebook.title}"? This cannot be undone.`)) {
@@ -163,24 +141,25 @@ const Notebooks: React.FC = () => {
       console.error('Delete notebook error:', err);
       setError('Failed to delete notebook');
     }
-  };
+  }, [notebook, navigate]);
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
+  const handleTitleClick = useCallback(() => {
+    if (notebook) {
+      setEditingTitle(true);
+      setTitleInput(notebook.title);
+    }
+  }, [notebook]);
 
-    if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
-    if (diffDays < 7) return `${diffDays}d ago`;
+  const handleTitleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === 'Enter') {
+        handleTitleSave();
+      }
+    },
+    [handleTitleSave]
+  );
 
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  };
-
+  // Loading state
   if (isLoading) {
     return (
       <div className="notebook-app">
@@ -192,6 +171,7 @@ const Notebooks: React.FC = () => {
     );
   }
 
+  // Not found state
   if (!notebook) {
     return (
       <div className="notebook-app">
@@ -212,7 +192,11 @@ const Notebooks: React.FC = () => {
       {/* Header */}
       <div className="editor-header">
         <div className="header-left">
-          <button className="btn-back" onClick={() => navigate('/notebooks')} title="Back to notebooks">
+          <button
+            className="btn-back"
+            onClick={() => navigate('/notebooks')}
+            title="Back to notebooks"
+          >
             ←
           </button>
           <div className="header-branding">
@@ -228,23 +212,17 @@ const Notebooks: React.FC = () => {
               value={titleInput}
               onChange={(e) => setTitleInput(e.target.value)}
               onBlur={handleTitleSave}
-              onKeyDown={(e) => e.key === 'Enter' && handleTitleSave()}
+              onKeyDown={handleTitleKeyDown}
               autoFocus
             />
           ) : (
-            <h1
-              className="header-title"
-              onClick={() => {
-                setEditingTitle(true);
-                setTitleInput(notebook.title);
-              }}
-            >
+            <h1 className="header-title" onClick={handleTitleClick}>
               {notebook.title}
             </h1>
           )}
         </div>
         <div className="header-right">
-          <span className="last-edited">Edited {formatDate(notebook.updatedAt)}</span>
+          <span className="last-edited">Edited {formatRelativeTime(notebook.updatedAt)}</span>
           <div className="user-avatar-small">
             {user?.name?.charAt(0) || user?.email?.charAt(0) || 'U'}
           </div>
@@ -259,7 +237,7 @@ const Notebooks: React.FC = () => {
         {error && (
           <div className="error-banner">
             {error}
-            <button onClick={() => setError('')} className="btn-close-error">
+            <button onClick={() => setError(null)} className="btn-close-error">
               ×
             </button>
           </div>

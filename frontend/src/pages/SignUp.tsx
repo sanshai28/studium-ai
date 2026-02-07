@@ -1,36 +1,37 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { getErrorMessage } from '../utils/errorHandler';
 import '../styles/Auth.css';
 
 const SignUp: React.FC = () => {
+  const navigate = useNavigate();
+  const { signup } = useAuth();
+
+  // State
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
-  const [error, setError] = useState('');
+  const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const { signup } = useAuth();
-  const navigate = useNavigate();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setIsLoading(true);
+  const handleSubmit = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      setError(null);
+      setIsLoading(true);
 
-    try {
-      await signup(email, password, name);
-      navigate('/');
-    } catch (err: unknown) {
-      const errorMessage = err && typeof err === 'object' && 'response' in err &&
-        err.response && typeof err.response === 'object' && 'data' in err.response &&
-        err.response.data && typeof err.response.data === 'object' && 'error' in err.response.data
-        ? String(err.response.data.error)
-        : 'Failed to sign up. Please try again.';
-      setError(errorMessage);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+      try {
+        await signup(email, password, name || undefined);
+        navigate('/notebooks');
+      } catch (err) {
+        setError(getErrorMessage(err, 'Failed to sign up. Please try again.'));
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [email, password, name, signup, navigate]
+  );
 
   return (
     <div className="auth-container">
@@ -49,6 +50,7 @@ const SignUp: React.FC = () => {
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Enter your name"
+              disabled={isLoading}
             />
           </div>
 
@@ -61,6 +63,7 @@ const SignUp: React.FC = () => {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Enter your email"
               required
+              disabled={isLoading}
             />
           </div>
 
@@ -74,6 +77,7 @@ const SignUp: React.FC = () => {
               placeholder="Enter your password"
               required
               minLength={6}
+              disabled={isLoading}
             />
           </div>
 

@@ -1,29 +1,25 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { notebooksAPI } from '../utils/api';
 import { useAuth } from '../contexts/AuthContext';
 import NotebookCard from '../components/NotebookCard';
+import type { Notebook } from '../types';
 import '../styles/NotebookDashboard.css';
 
-interface Notebook {
-  id: string;
-  title: string;
-  content: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
 const NotebookDashboard: React.FC = () => {
+  const navigate = useNavigate();
+  const { user, signout } = useAuth();
+
+  // State
   const [notebooks, setNotebooks] = useState<Notebook[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newNotebookTitle, setNewNotebookTitle] = useState('');
   const [isCreating, setIsCreating] = useState(false);
-  const navigate = useNavigate();
-  const { user, signout } = useAuth();
 
+  // Load notebooks on mount
   useEffect(() => {
     loadNotebooks();
   }, []);
@@ -31,7 +27,7 @@ const NotebookDashboard: React.FC = () => {
   const loadNotebooks = async () => {
     try {
       setIsLoading(true);
-      setError('');
+      setError(null);
       const data = await notebooksAPI.getAll();
       setNotebooks(data.notebooks || []);
     } catch (err) {
@@ -42,7 +38,7 @@ const NotebookDashboard: React.FC = () => {
     }
   };
 
-  const handleCreateNotebook = async () => {
+  const handleCreateNotebook = useCallback(async () => {
     if (!newNotebookTitle.trim()) return;
 
     try {
@@ -60,9 +56,9 @@ const NotebookDashboard: React.FC = () => {
     } finally {
       setIsCreating(false);
     }
-  };
+  }, [newNotebookTitle, navigate]);
 
-  const handleQuickCreate = async () => {
+  const handleQuickCreate = useCallback(async () => {
     try {
       setIsCreating(true);
       const data = await notebooksAPI.create({
@@ -76,38 +72,63 @@ const NotebookDashboard: React.FC = () => {
     } finally {
       setIsCreating(false);
     }
-  };
+  }, [navigate]);
 
-  const handleDeleteNotebook = async (e: React.MouseEvent, notebookId: string, title: string) => {
-    e.stopPropagation();
+  const handleDeleteNotebook = useCallback(
+    async (e: React.MouseEvent, notebookId: string, title: string) => {
+      e.stopPropagation();
 
-    if (!window.confirm(`Delete "${title}"? This cannot be undone.`)) {
-      return;
-    }
+      if (!window.confirm(`Delete "${title}"? This cannot be undone.`)) {
+        return;
+      }
 
-    try {
-      await notebooksAPI.delete(notebookId);
-      setNotebooks(notebooks.filter((n) => n.id !== notebookId));
-    } catch (err) {
-      console.error('Delete notebook error:', err);
-      setError('Failed to delete notebook');
-    }
-  };
-
-  const handleOpenNotebook = (notebookId: string) => {
-    navigate(`/notebooks/${notebookId}`);
-  };
-
-  const filteredNotebooks = notebooks.filter(
-    (notebook) =>
-      notebook.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      notebook.content.toLowerCase().includes(searchQuery.toLowerCase())
+      try {
+        await notebooksAPI.delete(notebookId);
+        setNotebooks((prev) => prev.filter((n) => n.id !== notebookId));
+      } catch (err) {
+        console.error('Delete notebook error:', err);
+        setError('Failed to delete notebook');
+      }
+    },
+    []
   );
 
-  const recentNotebooks = [...notebooks]
-    .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
-    .slice(0, 4);
+  const handleOpenNotebook = useCallback(
+    (notebookId: string) => {
+      navigate(`/notebooks/${notebookId}`);
+    },
+    [navigate]
+  );
 
+  const handleCreateKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === 'Enter') {
+        handleCreateNotebook();
+      }
+    },
+    [handleCreateNotebook]
+  );
+
+  // Derived state
+  const filteredNotebooks = useMemo(
+    () =>
+      notebooks.filter(
+        (notebook) =>
+          notebook.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          notebook.content.toLowerCase().includes(searchQuery.toLowerCase())
+      ),
+    [notebooks, searchQuery]
+  );
+
+  const recentNotebooks = useMemo(
+    () =>
+      [...notebooks]
+        .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+        .slice(0, 4),
+    [notebooks]
+  );
+
+  // Loading state
   if (isLoading) {
     return (
       <div className="dashboard">
@@ -140,10 +161,7 @@ const NotebookDashboard: React.FC = () => {
               className="search-input"
             />
             {searchQuery && (
-              <button
-                className="search-clear"
-                onClick={() => setSearchQuery('')}
-              >
+              <button className="search-clear" onClick={() => setSearchQuery('')}>
                 ×
               </button>
             )}
@@ -166,11 +184,11 @@ const NotebookDashboard: React.FC = () => {
         {error && (
           <div className="error-banner">
             {error}
-            <button onClick={() => setError('')}>×</button>
+            <button onClick={() => setError(null)}>×</button>
           </div>
         )}
 
-        {/* Hero Section - shown when no notebooks or no search */}
+        {/* Hero Section - shown when no notebooks */}
         {notebooks.length === 0 && !searchQuery && (
           <section className="hero-section">
             <div className="hero-content">
@@ -179,10 +197,7 @@ const NotebookDashboard: React.FC = () => {
                 Upload your documents, ask questions, and take notes with AI-powered assistance.
                 Create your first notebook to get started.
               </p>
-              <button
-                className="btn-create-hero"
-                onClick={() => setShowCreateModal(true)}
-              >
+              <button className="btn-create-hero" onClick={() => setShowCreateModal(true)}>
                 <span>+</span> Create your first notebook
               </button>
             </div>
@@ -202,10 +217,7 @@ const NotebookDashboard: React.FC = () => {
             </div>
             <div className="notebooks-grid">
               {/* Create New Card */}
-              <div
-                className="notebook-card create-card"
-                onClick={() => setShowCreateModal(true)}
-              >
+              <div className="notebook-card create-card" onClick={() => setShowCreateModal(true)}>
                 <div className="create-card-content">
                   <div className="create-icon">+</div>
                   <span>New notebook</span>
@@ -277,10 +289,7 @@ const NotebookDashboard: React.FC = () => {
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h2>Create new notebook</h2>
-              <button
-                className="modal-close"
-                onClick={() => setShowCreateModal(false)}
-              >
+              <button className="modal-close" onClick={() => setShowCreateModal(false)}>
                 ×
               </button>
             </div>
@@ -292,15 +301,12 @@ const NotebookDashboard: React.FC = () => {
                 placeholder="Enter notebook name..."
                 value={newNotebookTitle}
                 onChange={(e) => setNewNotebookTitle(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleCreateNotebook()}
+                onKeyDown={handleCreateKeyDown}
                 autoFocus
               />
             </div>
             <div className="modal-footer">
-              <button
-                className="btn-cancel"
-                onClick={() => setShowCreateModal(false)}
-              >
+              <button className="btn-cancel" onClick={() => setShowCreateModal(false)}>
                 Cancel
               </button>
               <button

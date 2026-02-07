@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { formatLastSaved } from '../utils/formatDate';
 
 interface NotesPaneProps {
   content: string;
@@ -22,47 +23,35 @@ const NotesPane: React.FC<NotesPaneProps> = ({
     setLocalContent(content);
   }, [content]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const newContent = e.target.value;
-    setLocalContent(newContent);
-    onContentChange(newContent);
+  const handleChange = useCallback(
+    (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+      const newContent = e.target.value;
+      setLocalContent(newContent);
+      onContentChange(newContent);
 
-    // Debounce auto-save
-    if (saveTimeoutRef.current) {
-      clearTimeout(saveTimeoutRef.current);
-    }
-    saveTimeoutRef.current = setTimeout(() => {
-      onSave();
-    }, 2000);
-  };
+      // Debounce auto-save
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+      saveTimeoutRef.current = setTimeout(() => {
+        onSave();
+      }, 2000);
+    },
+    [onContentChange, onSave]
+  );
 
-  const formatLastSaved = () => {
-    if (!lastSaved) return '';
-    const now = new Date();
-    const diff = Math.floor((now.getTime() - lastSaved.getTime()) / 1000);
-
-    if (diff < 5) return 'Just saved';
-    if (diff < 60) return `Saved ${diff}s ago`;
-    if (diff < 3600) return `Saved ${Math.floor(diff / 60)}m ago`;
-    return `Saved at ${lastSaved.toLocaleTimeString()}`;
-  };
-
-  const handleManualSave = () => {
+  const handleManualSave = useCallback(() => {
     if (saveTimeoutRef.current) {
       clearTimeout(saveTimeoutRef.current);
     }
     onSave();
-  };
+  }, [onSave]);
 
   return (
     <div className="notes-pane">
       <div className="pane-header">
         <h3>Notes</h3>
-        <button
-          className="save-btn"
-          onClick={handleManualSave}
-          disabled={isSaving}
-        >
+        <button className="save-btn" onClick={handleManualSave} disabled={isSaving}>
           {isSaving ? 'Saving...' : 'Save'}
         </button>
       </div>
@@ -76,7 +65,7 @@ const NotesPane: React.FC<NotesPaneProps> = ({
       </div>
 
       <div className="notes-footer">
-        <span className="save-status">{formatLastSaved()}</span>
+        <span className="save-status">{formatLastSaved(lastSaved)}</span>
         <span className="char-count">{localContent.length} characters</span>
       </div>
     </div>
