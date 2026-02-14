@@ -2,7 +2,6 @@ import React, { useState, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { getErrorMessage } from '../utils/errorHandler';
-import { AnimatedBackground } from '../components/backgrounds';
 import '../styles/Auth.css';
 
 const SignUp: React.FC = () => {
@@ -36,16 +35,15 @@ const SignUp: React.FC = () => {
 
   return (
     <div className="auth-container">
-      <AnimatedBackground variant="auth" />
       <div className="auth-card">
-        <h1>Create Account</h1>
-        <p className="auth-subtitle">Join Studium AI to start your learning journey</p>
+        <h1>Create account</h1>
+        <p className="auth-subtitle">to get started with Studium AI</p>
 
         {error && <div className="error-message">{error}</div>}
 
         <form onSubmit={handleSubmit} className="auth-form">
           <div className="form-group">
-            <label htmlFor="name">Name (Optional)</label>
+            <label htmlFor="name">Name (optional)</label>
             <input
               type="text"
               id="name"
@@ -57,7 +55,7 @@ const SignUp: React.FC = () => {
           </div>
 
           <div className="form-group">
-            <label htmlFor="email">Email *</label>
+            <label htmlFor="email">Email</label>
             <input
               type="email"
               id="email"
@@ -70,13 +68,13 @@ const SignUp: React.FC = () => {
           </div>
 
           <div className="form-group">
-            <label htmlFor="password">Password *</label>
+            <label htmlFor="password">Password</label>
             <input
               type="password"
               id="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter your password"
+              placeholder="Create a password"
               required
               minLength={6}
               disabled={isLoading}
@@ -84,12 +82,12 @@ const SignUp: React.FC = () => {
           </div>
 
           <button type="submit" className="auth-button" disabled={isLoading}>
-            {isLoading ? 'Creating Account...' : 'Sign Up'}
+            {isLoading ? 'Creating account...' : 'Create account'}
           </button>
         </form>
 
         <p className="auth-link">
-          Already have an account? <Link to="/signin">Sign In</Link>
+          Already have an account? <Link to="/signin">Sign in</Link>
         </p>
       </div>
     </div>

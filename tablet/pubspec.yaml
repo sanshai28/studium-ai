@@ -1,0 +1,42 @@
+name: studium_tablet
+description: "Studium AI - Tablet App"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.11.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+
+  # State management
+  flutter_riverpod: ^2.6.1
+
+  # Navigation
+  go_router: ^14.8.1
+
+  # HTTP
+  dio: ^5.7.0
+
+  # Secure token storage
+  flutter_secure_storage: ^9.2.4
+
+  # File picking
+  file_picker: ^8.1.7
+
+  # Utilities
+  intl: ^0.20.2
+  shimmer: ^3.0.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/

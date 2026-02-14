@@ -28,17 +28,18 @@ export const getPreviewText = (text: string, maxLength = 120): string => {
 
 /**
  * Generate a color from a string (for notebook card headers)
+ * Uses CSS variable names defined in variables.css
  */
 export const getColorFromString = (str: string): string => {
   const colors = [
-    '#4285f4', // blue
-    '#ea4335', // red
-    '#fbbc04', // yellow
-    '#34a853', // green
-    '#ff6d01', // orange
-    '#46bdc6', // teal
-    '#7baaf7', // light blue
-    '#f07b72', // light red
+    'var(--card-blue)',
+    'var(--card-red)',
+    'var(--card-yellow)',
+    'var(--card-green)',
+    'var(--card-orange)',
+    'var(--card-teal)',
+    'var(--card-purple)',
+    'var(--card-indigo)',
   ];
   let hash = 0;
   for (let i = 0; i < str.length; i++) {

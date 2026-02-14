@@ -2,7 +2,6 @@ import React, { useState, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { getErrorMessage } from '../utils/errorHandler';
-import { AnimatedBackground } from '../components/backgrounds';
 import '../styles/Auth.css';
 
 const SignIn: React.FC = () => {
@@ -35,10 +34,9 @@ const SignIn: React.FC = () => {
 
   return (
     <div className="auth-container">
-      <AnimatedBackground variant="auth" />
       <div className="auth-card">
-        <h1>Welcome Back</h1>
-        <p className="auth-subtitle">Sign in to continue your learning</p>
+        <h1>Sign in</h1>
+        <p className="auth-subtitle">to continue to Studium AI</p>
 
         {error && <div className="error-message">{error}</div>}
 
@@ -69,17 +67,17 @@ const SignIn: React.FC = () => {
             />
           </div>
 
-          <p className="auth-link" style={{ margin: '0.5rem 0', textAlign: 'right' }}>
-            <Link to="/request-password-reset">Forgot Password?</Link>
+          <p className="auth-link" style={{ margin: '0', textAlign: 'right', marginTop: '-8px' }}>
+            <Link to="/request-password-reset">Forgot password?</Link>
           </p>
 
           <button type="submit" className="auth-button" disabled={isLoading}>
-            {isLoading ? 'Signing In...' : 'Sign In'}
+            {isLoading ? 'Signing in...' : 'Sign in'}
           </button>
         </form>
 
         <p className="auth-link">
-          Don't have an account? <Link to="/signup">Sign Up</Link>
+          Don't have an account? <Link to="/signup">Create account</Link>
         </p>
       </div>
     </div>
