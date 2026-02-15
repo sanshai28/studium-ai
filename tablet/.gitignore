@@ -27,11 +27,23 @@ migrate_working_dir/
 **/doc/api/
 **/ios/Flutter/.last_build_id
 .dart_tool/
+.flutter-plugins
 .flutter-plugins-dependencies
 .pub-cache/
 .pub/
 /build/
 /coverage/
+.metadata
+
+# CocoaPods — regenerated from Podfile.lock
+ios/Pods/
+macos/Pods/
+
+# Non-target platforms (tablet app targets iOS/Android only)
+/web/
+/macos/
+/linux/
+/windows/
 
 # Symbolication related
 app.*.symbols
@@ -43,3 +55,12 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Generated Xcode files
+**/ios/Flutter/Generated.xcconfig
+**/ios/Flutter/flutter_export_environment.sh
+
+# Dart code generation
+*.g.dart
+*.freezed.dart
+*.mocks.dart
