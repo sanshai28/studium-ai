@@ -36,6 +36,11 @@ coverage/
 *.lcov
 .nyc_output/
 
+# Playwright
+/frontend/test-results/
+/frontend/playwright-report/
+/frontend/blob-report/
+
 # Logs
 logs/
 *.log
