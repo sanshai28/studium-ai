@@ -1,11 +1,25 @@
+/// Represents an authenticated user.
 class User {
+  /// Unique identifier.
   final String id;
+
+  /// User's email address.
   final String email;
+
+  /// Optional display name.
   final String? name;
 
-  User({required this.id, required this.email, this.name});
+  /// Creates a [User].
+  const User({
+    required this.id,
+    required this.email,
+    this.name,
+  });
 
-  factory User.fromJson(Map<String, dynamic> json) {
+  /// Deserializes from a JSON map.
+  factory User.fromJson(
+    Map<String, dynamic> json,
+  ) {
     return User(
       id: json['id'] as String,
       email: json['email'] as String,
@@ -13,9 +27,10 @@ class User {
     );
   }
 
+  /// Serializes to a JSON map.
   Map<String, dynamic> toJson() => {
-    'id': id,
-    'email': email,
-    'name': name,
-  };
+        'id': id,
+        'email': email,
+        'name': name,
+      };
 }

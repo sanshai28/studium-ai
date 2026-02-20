@@ -2,21 +2,30 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../config/routes.dart';
 import '../../providers/auth_provider.dart';
 import '../../theme/colors.dart';
 import '../../widgets/auth/auth_card.dart';
 import '../../widgets/common/gradient_button.dart';
 
-class SignInScreen extends ConsumerStatefulWidget {
+/// Screen that allows existing users to sign in
+/// with their email and password.
+class SignInScreen
+    extends ConsumerStatefulWidget {
+  /// Creates a [SignInScreen].
   const SignInScreen({super.key});
 
   @override
-  ConsumerState<SignInScreen> createState() => _SignInScreenState();
+  ConsumerState<SignInScreen> createState() =>
+      _SignInScreenState();
 }
 
-class _SignInScreenState extends ConsumerState<SignInScreen> {
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
+class _SignInScreenState
+    extends ConsumerState<SignInScreen> {
+  final _emailController =
+      TextEditingController();
+  final _passwordController =
+      TextEditingController();
   String? _error;
   bool _isLoading = false;
 
@@ -34,11 +43,15 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
     });
 
     try {
-      await ref.read(authProvider.notifier).signIn(
+      await ref
+          .read(authProvider.notifier)
+          .signIn(
             _emailController.text.trim(),
             _passwordController.text,
           );
-      if (mounted) context.go('/notebooks');
+      if (mounted) {
+        context.go(AppRoutes.notebooks);
+      }
     } catch (e) {
       if (mounted) {
         setState(() {
@@ -55,7 +68,9 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
       body: DecoratedBox(
         decoration: const BoxDecoration(
           image: DecorationImage(
-            image: AssetImage('assets/images/unnamed.jpg'),
+            image: AssetImage(
+              'assets/images/unnamed.jpg',
+            ),
             fit: BoxFit.cover,
           ),
         ),
@@ -64,7 +79,10 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
             padding: const EdgeInsets.all(24),
             child: AuthCard(
               children: [
-                const Text('📚', style: TextStyle(fontSize: 48)),
+                const Text(
+                  '\u{1F4DA}',
+                  style: TextStyle(fontSize: 48),
+                ),
                 const SizedBox(height: 32),
                 const Text(
                   'Sign in',
@@ -79,24 +97,15 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                 Text(
                   'to continue to Studium AI',
                   style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.55),
+                    color: Colors.white
+                        .withValues(alpha: 0.55),
                     fontSize: 15,
                   ),
                 ),
                 const SizedBox(height: 44),
                 if (_error != null) ...[
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: AppColors.error.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppColors.error.withValues(alpha: 0.2)),
-                    ),
-                    child: Text(
-                      _error!,
-                      style: const TextStyle(color: Color(0xFFFCA5A5), fontSize: 14),
-                    ),
+                  _ErrorBanner(
+                    message: _error ?? '',
                   ),
                   const SizedBox(height: 20),
                 ],
@@ -104,25 +113,35 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                   label: 'Email',
                   hint: 'Enter your email',
                   controller: _emailController,
-                  keyboardType: TextInputType.emailAddress,
+                  keyboardType:
+                      TextInputType.emailAddress,
                   enabled: !_isLoading,
                 ),
                 const SizedBox(height: 28),
                 AuthTextField(
                   label: 'Password',
                   hint: 'Enter your password',
-                  controller: _passwordController,
+                  controller:
+                      _passwordController,
                   obscureText: true,
                   enabled: !_isLoading,
                 ),
                 const SizedBox(height: 8),
                 Align(
-                  alignment: Alignment.centerRight,
+                  alignment:
+                      Alignment.centerRight,
                   child: TextButton(
-                    onPressed: () => context.push('/reset-password'),
+                    onPressed: () => context
+                        .push(
+                      AppRoutes.resetPassword,
+                    ),
                     child: const Text(
                       'Forgot password?',
-                      style: TextStyle(color: AppColors.authLink, fontSize: 13),
+                      style: TextStyle(
+                        color:
+                            AppColors.authLink,
+                        fontSize: 13,
+                      ),
                     ),
                   ),
                 ),
@@ -134,23 +153,31 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                 ),
                 const SizedBox(height: 36),
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisAlignment:
+                      MainAxisAlignment.center,
                   children: [
                     Text(
                       "Don't have an account? ",
                       style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.5),
+                        color: Colors.white
+                            .withValues(
+                          alpha: 0.5,
+                        ),
                         fontSize: 14,
                       ),
                     ),
                     GestureDetector(
-                      onTap: () => context.go('/signup'),
+                      onTap: () => context.go(
+                        AppRoutes.signUp,
+                      ),
                       child: const Text(
                         'Create account',
                         style: TextStyle(
-                          color: AppColors.authLink,
+                          color:
+                              AppColors.authLink,
                           fontSize: 14,
-                          fontWeight: FontWeight.w600,
+                          fontWeight:
+                              FontWeight.w600,
                         ),
                       ),
                     ),
@@ -159,6 +186,41 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ErrorBanner extends StatelessWidget {
+  const _ErrorBanner({
+    required this.message,
+  });
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.error.withValues(
+          alpha: 0.12,
+        ),
+        borderRadius:
+            BorderRadius.circular(12),
+        border: Border.all(
+          color: AppColors.error.withValues(
+            alpha: 0.2,
+          ),
+        ),
+      ),
+      child: Text(
+        message,
+        style: const TextStyle(
+          color: Color(0xFFFCA5A5),
+          fontSize: 14,
         ),
       ),
     );

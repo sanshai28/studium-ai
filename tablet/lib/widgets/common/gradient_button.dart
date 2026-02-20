@@ -2,11 +2,18 @@ import 'package:flutter/material.dart';
 
 import '../../theme/colors.dart';
 
+/// A full-width button with a gradient background.
 class GradientButton extends StatelessWidget {
+  /// The label text displayed on the button.
   final String text;
+
+  /// Called when the button is tapped.
   final VoidCallback? onPressed;
+
+  /// Whether the button shows a loading spinner.
   final bool isLoading;
 
+  /// Creates a [GradientButton].
   const GradientButton({
     super.key,
     required this.text,
@@ -21,14 +28,19 @@ class GradientButton extends StatelessWidget {
       height: 52,
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [AppColors.primary, AppColors.secondary],
+          colors: [
+            AppColors.primary,
+            AppColors.secondary,
+          ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.35),
+            color: AppColors.primary.withValues(
+              alpha: 0.35,
+            ),
             blurRadius: 15,
             offset: const Offset(0, 4),
           ),
@@ -38,15 +50,21 @@ class GradientButton extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           onTap: isLoading ? null : onPressed,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius:
+              BorderRadius.circular(14),
           child: Center(
             child: isLoading
                 ? const SizedBox(
                     width: 22,
                     height: 22,
-                    child: CircularProgressIndicator(
+                    child:
+                        CircularProgressIndicator(
                       strokeWidth: 2.5,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      valueColor:
+                          AlwaysStoppedAnimation<
+                              Color>(
+                        Colors.white,
+                      ),
                     ),
                   )
                 : Text(
