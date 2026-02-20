@@ -1,10 +1,14 @@
 import { test, expect } from '@playwright/test';
+import { fileURLToPath } from 'url';
 import path from 'path';
 import {
   signUp,
   createNotebookViaAPI,
   deleteNotebookViaAPI,
 } from './helpers/auth';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const hasAIKey = !process.env.CI || (process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY !== 'skip-ai-tests');
 

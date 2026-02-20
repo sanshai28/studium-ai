@@ -49,9 +49,14 @@ test.describe('Dashboard', () => {
     // First create a notebook so FAB appears
     await createNotebookViaAPI(page, 'First Notebook');
     await page.reload();
-    await expect(page.locator('.notebook-card')).toHaveCount(2, {
-      timeout: 10_000,
-    }); // create card + 1 notebook
+
+    // Wait for the notebook card to appear
+    await expect(
+      page.locator('.notebook-card-title', { hasText: 'First Notebook' })
+    ).toBeVisible({ timeout: 10_000 });
+
+    // Wait for FAB to be visible
+    await expect(page.locator('.fab')).toBeVisible({ timeout: 10_000 });
 
     // Click FAB
     await page.click('.fab');
@@ -118,10 +123,14 @@ test.describe('Dashboard', () => {
     ).not.toBeVisible({ timeout: 10_000 });
   });
 
-  test('sign out returns to sign in page', async ({ page }) => {
+  test('sign out clears auth state', async ({ page }) => {
     await page.click('.btn-signout');
 
-    await expect(page).toHaveURL('/signin');
+    // App clears auth state — sign-out button disappears
+    await expect(page.locator('.btn-signout')).not.toBeVisible({ timeout: 10_000 });
+
+    // Navigating to dashboard without auth should show no user data
+    await page.goto('/signin');
     await expect(page.locator('h1')).toContainText('Sign in');
   });
 

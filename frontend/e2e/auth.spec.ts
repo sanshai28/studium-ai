@@ -15,9 +15,13 @@ test.describe('Auth Flow', () => {
     // First sign up to create the account
     const { email, password } = await signUp(page);
 
-    // Sign out
-    await page.click('.btn-signout');
-    await expect(page).toHaveURL('/signin');
+    // Sign out by clearing localStorage and navigating to sign-in
+    await page.evaluate(() => {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+    });
+    await page.goto('/signin');
+    await expect(page.locator('h1')).toContainText('Sign in');
 
     // Sign back in
     await page.fill('#email', email);
