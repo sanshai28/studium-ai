@@ -162,12 +162,19 @@ The tablet app connects to the same REST API as the web frontend.
 ### Dart Style
 
 - Follow [Effective Dart](https://dart.dev/effective-dart) strictly
+- **80-character line limit** — enforced by `dart format`
 - Use `dart format` — never manually format code
 - All files use `snake_case.dart` naming
 - Classes use `PascalCase`, variables/functions use `camelCase`
 - Private members prefixed with `_` (Dart convention)
 - Prefer `final` for variables that don't change
 - Use `const` constructors wherever possible for widget performance
+- **Avoid `!` (bang operator)** — use null-safe alternatives (`??`, `?.`, `if-case`, pattern matching)
+- Use **exhaustive switch expressions** (Dart 3) — handle all enum/sealed cases
+- Use `log()` from `dart:developer` instead of `print()` — supports structured metadata
+- Functions should be **< 20 lines** — extract helpers for readability
+- Use `///` doc comments on all public APIs (classes, constructors, methods)
+- Comment _why_, not _what_ — avoid restating what the code already says
 
 ### Models
 
@@ -275,10 +282,13 @@ class NotebooksNotifier extends AsyncNotifier<List<Notebook>> {
 ### Widgets
 
 - **Small, focused, reusable** — one responsibility per widget
+- **Favor composition over inheritance** — build complex UIs from small widget classes
+- **Extract private Widget classes** instead of helper methods (`Widget _buildHeader()`) — private classes enable framework optimizations and `const` constructors
 - Use `const` constructors when all fields are final
 - Prefer `StatelessWidget` unless local animation/controller state is needed
 - Extract widgets into separate files when they exceed ~80 lines
 - Pass callbacks down, not providers — keeps widgets testable
+- Use `compute()` to run expensive operations in a separate isolate (parsing large files, heavy transforms)
 
 ```dart
 class NotebookCard extends StatelessWidget {
@@ -403,6 +413,30 @@ LayoutBuilder(builder: (context, constraints) {
 });
 ```
 
+### Accessibility (A11Y)
+
+- Ensure **text contrast ratio ≥ 4.5:1** against backgrounds (WCAG AA)
+- Use `Semantics` widget for descriptive labels on interactive elements
+- Test with system font scaling enabled (large/extra-large text sizes)
+- Test with **VoiceOver** (iOS) and **TalkBack** (Android)
+- Ensure all interactive elements have a minimum tap target of **48x48 dp**
+- Provide meaningful labels for icons and buttons (via `tooltip` or `Semantics`)
+
+### Theming
+
+- Use **Material 3** with `useMaterial3: true`
+- Provide both `theme` (light) and `darkTheme` (dark) in `MaterialApp`
+- Use `ColorScheme.fromSeed()` for harmonious palette generation where appropriate
+- Use `ThemeExtension<T>` for custom design tokens beyond standard `ThemeData`
+- Support `ThemeMode` toggling (system/light/dark) for user preference
+
+### Typography
+
+- Limit to **1–2 font families** application-wide
+- Establish a clear font size scale for visual hierarchy
+- Set line height to **1.4–1.6x** font size for body text readability
+- Aim for **45–75 character** line length for body text
+
 ### Animation Standards
 
 - Page transitions: 300ms `Curves.easeInOut`
@@ -435,6 +469,13 @@ test/
     ├── test_helpers.dart    # pumpApp(), createMockDio()
     └── mock_services.dart   # Fake service implementations
 ```
+
+### Test Principles
+
+- Follow **Arrange–Act–Assert** (Given–When–Then) pattern in all tests
+- **Prefer fakes and stubs over mocks** — simpler, faster, less brittle
+- If mocks are needed, use `mocktail` (no code generation required)
+- Avoid mocking Flutter framework internals
 
 ### Unit Tests (models, services, providers)
 

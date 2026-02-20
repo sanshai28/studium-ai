@@ -4,35 +4,59 @@ import '../models/notebook.dart';
 import '../services/notebook_service.dart';
 import 'auth_provider.dart';
 
-final notebookServiceProvider = Provider<NotebookService>((ref) {
-  return NotebookService(ref.read(apiClientProvider).dio);
+/// Provider for [NotebookService].
+final notebookServiceProvider =
+    Provider<NotebookService>((ref) {
+  return NotebookService(
+    ref.read(apiClientProvider).dio,
+  );
 });
 
+/// Provider for the list of user notebooks.
 final notebooksProvider =
-    AsyncNotifierProvider<NotebooksNotifier, List<Notebook>>(NotebooksNotifier.new);
+    AsyncNotifierProvider<
+        NotebooksNotifier,
+        List<Notebook>>(
+  NotebooksNotifier.new,
+);
 
+/// Provider for a single notebook by ID.
 final notebookProvider =
-    FutureProvider.family<Notebook, String>((ref, id) async {
-  final service = ref.read(notebookServiceProvider);
-  return service.getOne(id);
-});
+    FutureProvider.family<Notebook, String>(
+  (ref, id) async {
+    final service =
+        ref.read(notebookServiceProvider);
+    return service.getOne(id);
+  },
+);
 
-class NotebooksNotifier extends AsyncNotifier<List<Notebook>> {
+/// Manages the notebooks list with CRUD ops.
+class NotebooksNotifier
+    extends AsyncNotifier<List<Notebook>> {
+  /// Fetches all notebooks from the API.
   @override
   Future<List<Notebook>> build() async {
-    final service = ref.read(notebookServiceProvider);
+    final service =
+        ref.read(notebookServiceProvider);
     return service.getAll();
   }
 
+  /// Creates a notebook with [title] and
+  /// refreshes the list.
   Future<Notebook> create(String title) async {
-    final service = ref.read(notebookServiceProvider);
-    final notebook = await service.create(title);
+    final service =
+        ref.read(notebookServiceProvider);
+    final notebook =
+        await service.create(title);
     ref.invalidateSelf();
     return notebook;
   }
 
+  /// Deletes a notebook by [id] and refreshes
+  /// the list.
   Future<void> delete(String id) async {
-    final service = ref.read(notebookServiceProvider);
+    final service =
+        ref.read(notebookServiceProvider);
     await service.delete(id);
     ref.invalidateSelf();
   }

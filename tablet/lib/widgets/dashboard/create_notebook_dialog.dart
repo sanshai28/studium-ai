@@ -2,15 +2,23 @@ import 'package:flutter/material.dart';
 
 import '../../theme/colors.dart';
 
-class CreateNotebookDialog extends StatefulWidget {
+/// A dialog that prompts the user to create
+/// a new notebook with a title.
+class CreateNotebookDialog
+    extends StatefulWidget {
+  /// Creates a [CreateNotebookDialog].
   const CreateNotebookDialog({super.key});
 
   @override
-  State<CreateNotebookDialog> createState() => _CreateNotebookDialogState();
+  State<CreateNotebookDialog> createState() =>
+      _CreateNotebookDialogState();
 }
 
-class _CreateNotebookDialogState extends State<CreateNotebookDialog> {
-  final _controller = TextEditingController(text: 'Untitled notebook');
+class _CreateNotebookDialogState
+    extends State<CreateNotebookDialog> {
+  final _controller = TextEditingController(
+    text: 'Untitled notebook',
+  );
 
   @override
   void initState() {
@@ -41,7 +49,8 @@ class _CreateNotebookDialogState extends State<CreateNotebookDialog> {
       ),
       actions: [
         TextButton(
-          onPressed: () => Navigator.pop(context),
+          onPressed: () =>
+              Navigator.pop(context),
           child: const Text('Cancel'),
         ),
         ElevatedButton(

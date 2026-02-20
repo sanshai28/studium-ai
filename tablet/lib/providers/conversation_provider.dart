@@ -5,16 +5,29 @@ import '../models/message.dart';
 import '../services/conversation_service.dart';
 import 'auth_provider.dart';
 
-final conversationServiceProvider = Provider<ConversationService>((ref) {
-  return ConversationService(ref.read(apiClientProvider).dio);
+/// Provider for [ConversationService].
+final conversationServiceProvider =
+    Provider<ConversationService>((ref) {
+  return ConversationService(
+    ref.read(apiClientProvider).dio,
+  );
 });
 
+/// Immutable state for a Q&A conversation.
 class ConversationState {
+  /// The active conversation, if loaded.
   final Conversation? conversation;
+
+  /// Messages in the conversation.
   final List<Message> messages;
+
+  /// Whether the conversation is loading.
   final bool isLoading;
+
+  /// Whether a message is being sent.
   final bool isSending;
 
+  /// Creates a [ConversationState].
   const ConversationState({
     this.conversation,
     this.messages = const [],
@@ -22,6 +35,7 @@ class ConversationState {
     this.isSending = false,
   });
 
+  /// Returns a copy with the given fields.
   ConversationState copyWith({
     Conversation? conversation,
     List<Message>? messages,
@@ -29,7 +43,8 @@ class ConversationState {
     bool? isSending,
   }) {
     return ConversationState(
-      conversation: conversation ?? this.conversation,
+      conversation:
+          conversation ?? this.conversation,
       messages: messages ?? this.messages,
       isLoading: isLoading ?? this.isLoading,
       isSending: isSending ?? this.isSending,
@@ -37,28 +52,35 @@ class ConversationState {
   }
 }
 
-class ConversationNotifier extends FamilyNotifier<ConversationState, String> {
+/// Manages conversation state for a notebook.
+class ConversationNotifier extends FamilyNotifier<
+    ConversationState, String> {
+  /// Builds initial state and starts loading.
   @override
   ConversationState build(String arg) {
     _init();
-    return const ConversationState(isLoading: true);
+    return const ConversationState(
+      isLoading: true,
+    );
   }
 
   Future<void> _init() async {
-    final service = ref.read(conversationServiceProvider);
+    final service =
+        ref.read(conversationServiceProvider);
 
     try {
-      // Get or create conversation
-      var conversations = await service.getAll(arg);
+      var conversations =
+          await service.getAll(arg);
       Conversation conversation;
       if (conversations.isEmpty) {
-        conversation = await service.create(arg);
+        conversation =
+            await service.create(arg);
       } else {
         conversation = conversations.first;
       }
 
-      // Load messages
-      final messages = await service.getMessages(conversation.id);
+      final messages = await service
+          .getMessages(conversation.id);
       state = state.copyWith(
         conversation: conversation,
         messages: messages,
@@ -69,17 +91,29 @@ class ConversationNotifier extends FamilyNotifier<ConversationState, String> {
     }
   }
 
-  Future<void> sendMessage(String content) async {
+  /// Sends a [content] message and appends
+  /// both user and AI response to state.
+  Future<void> sendMessage(
+    String content,
+  ) async {
     final conversation = state.conversation;
     if (conversation == null) return;
 
     state = state.copyWith(isSending: true);
 
     try {
-      final service = ref.read(conversationServiceProvider);
-      final result = await service.sendMessage(conversation.id, content);
+      final service =
+          ref.read(conversationServiceProvider);
+      final result = await service.sendMessage(
+        conversation.id,
+        content,
+      );
       state = state.copyWith(
-        messages: [...state.messages, result.userMessage, result.assistantMessage],
+        messages: [
+          ...state.messages,
+          result.userMessage,
+          result.assistantMessage,
+        ],
         isSending: false,
       );
     } catch (e) {
@@ -89,7 +123,12 @@ class ConversationNotifier extends FamilyNotifier<ConversationState, String> {
   }
 }
 
-final conversationProvider =
-    NotifierProvider.family<ConversationNotifier, ConversationState, String>(
+/// Family provider for conversation state
+/// keyed by notebook ID.
+final conversationProvider = NotifierProvider
+    .family<
+        ConversationNotifier,
+        ConversationState,
+        String>(
   ConversationNotifier.new,
 );

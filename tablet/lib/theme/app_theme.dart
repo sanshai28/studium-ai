@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 
 import 'colors.dart';
 
+/// Provides the app's Material 3 theme configuration.
 class AppTheme {
+  /// Light theme using [AppColors] palette.
   static ThemeData get light {
     return ThemeData(
       useMaterial3: true,
@@ -32,38 +34,57 @@ class AppTheme {
         fillColor: AppColors.surface,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.border),
+          borderSide: const BorderSide(
+            color: AppColors.border,
+          ),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.border),
+          borderSide: const BorderSide(
+            color: AppColors.border,
+          ),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.primary, width: 2),
+          borderSide: const BorderSide(
+            color: AppColors.primary,
+            width: 2,
+          ),
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 14,
+        ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
           elevation: 0,
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+          padding: const EdgeInsets.symmetric(
+            horizontal: 24,
+            vertical: 14,
+          ),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
-          textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+          textStyle: const TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
-      floatingActionButtonTheme: const FloatingActionButtonThemeData(
+      floatingActionButtonTheme:
+          const FloatingActionButtonThemeData(
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
         elevation: 4,
       ),
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
       ),
       dividerTheme: const DividerThemeData(
         color: AppColors.borderLight,
