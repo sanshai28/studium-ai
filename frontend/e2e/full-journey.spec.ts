@@ -2,8 +2,10 @@ import { test, expect } from '@playwright/test';
 import path from 'path';
 import { generateTestEmail } from './helpers/auth';
 
+const hasAIKey = !process.env.CI || (process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY !== 'skip-ai-tests');
+
 test.describe('Full User Journey', () => {
-  test('complete flow: sign up → create notebook → upload → Q&A → notes → delete → sign out', async ({
+  (hasAIKey ? test : test.skip)('complete flow: sign up → create notebook → upload → Q&A → notes → delete → sign out', async ({
     page,
   }) => {
     test.setTimeout(120_000);

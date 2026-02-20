@@ -6,6 +6,8 @@ import {
   deleteNotebookViaAPI,
 } from './helpers/auth';
 
+const hasAIKey = !process.env.CI || (process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY !== 'skip-ai-tests');
+
 test.describe('Notebook Editor', () => {
   let notebookId: string;
 
@@ -77,7 +79,7 @@ test.describe('Notebook Editor', () => {
     ).toBeVisible({ timeout: 15_000 });
   });
 
-  test('send Q&A message and receive AI response', async ({ page }) => {
+  (hasAIKey ? test : test.skip)('send Q&A message and receive AI response', async ({ page }) => {
     // First upload a source so Q&A is enabled
     const testFilePath = path.resolve(
       __dirname,
@@ -111,7 +113,7 @@ test.describe('Notebook Editor', () => {
     ).toBeVisible();
   });
 
-  test('add AI response to notes', async ({ page }) => {
+  (hasAIKey ? test : test.skip)('add AI response to notes', async ({ page }) => {
     // Upload source
     const testFilePath = path.resolve(
       __dirname,

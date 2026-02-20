@@ -1,9 +1,9 @@
 import { test, expect } from '@playwright/test';
-import { generateTestEmail, signUp } from './helpers/auth';
+import { signUp } from './helpers/auth';
 
 test.describe('Auth Flow', () => {
   test('sign up creates account and redirects to dashboard', async ({ page }) => {
-    const { email } = await signUp(page);
+    await signUp(page);
 
     // Should be on the notebooks dashboard
     await expect(page.locator('.dashboard')).toBeVisible();

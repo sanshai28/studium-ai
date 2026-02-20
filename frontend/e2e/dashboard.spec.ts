@@ -2,7 +2,6 @@ import { test, expect } from '@playwright/test';
 import {
   signUp,
   createNotebookViaAPI,
-  deleteNotebookViaAPI,
 } from './helpers/auth';
 
 test.describe('Dashboard', () => {
@@ -97,7 +96,7 @@ test.describe('Dashboard', () => {
   });
 
   test('delete notebook removes card from dashboard', async ({ page }) => {
-    const notebookId = await createNotebookViaAPI(page, 'Delete Me');
+    await createNotebookViaAPI(page, 'Delete Me');
     await page.reload();
 
     await expect(
@@ -127,7 +126,7 @@ test.describe('Dashboard', () => {
   });
 
   test('clicking notebook card opens editor', async ({ page }) => {
-    const notebookId = await createNotebookViaAPI(page, 'Open Me');
+    await createNotebookViaAPI(page, 'Open Me');
     await page.reload();
 
     await expect(
