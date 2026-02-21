@@ -7,6 +7,12 @@ import { AnimatedBackground } from '../components/backgrounds';
 import type { Notebook } from '../types';
 import '../styles/NotebookDashboard.css';
 
+interface Toast {
+  id: number;
+  message: string;
+  type: 'success' | 'error';
+}
+
 const NotebookDashboard: React.FC = () => {
   const navigate = useNavigate();
   const { user, signout } = useAuth();
@@ -19,6 +25,9 @@ const NotebookDashboard: React.FC = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newNotebookTitle, setNewNotebookTitle] = useState('');
   const [isCreating, setIsCreating] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string } | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [toasts, setToasts] = useState<Toast[]>([]);
 
   // Load notebooks on mount
   useEffect(() => {
@@ -38,6 +47,12 @@ const NotebookDashboard: React.FC = () => {
       setIsLoading(false);
     }
   };
+
+  const addToast = useCallback((message: string, type: 'success' | 'error') => {
+    const id = Date.now();
+    setToasts((prev) => [...prev, { id, message, type }]);
+    setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 3000);
+  }, []);
 
   const handleCreateNotebook = useCallback(async () => {
     if (!newNotebookTitle.trim()) return;
@@ -75,23 +90,46 @@ const NotebookDashboard: React.FC = () => {
     }
   }, [navigate]);
 
-  const handleDeleteNotebook = useCallback(
-    async (e: React.MouseEvent, notebookId: string, title: string) => {
-      e.stopPropagation();
+  const handleDeleteNotebook = useCallback((notebookId: string, title: string) => {
+    setDeleteTarget({ id: notebookId, title });
+  }, []);
 
-      if (!window.confirm(`Delete "${title}"? This cannot be undone.`)) {
-        return;
-      }
+  const confirmDelete = useCallback(async () => {
+    if (!deleteTarget) return;
+    setIsDeleting(true);
+    try {
+      await notebooksAPI.delete(deleteTarget.id);
+      setNotebooks((prev) => prev.filter((n) => n.id !== deleteTarget.id));
+      addToast(`"${deleteTarget.title}" deleted`, 'success');
+    } catch (err) {
+      console.error('Delete notebook error:', err);
+      addToast('Failed to delete notebook', 'error');
+    } finally {
+      setIsDeleting(false);
+      setDeleteTarget(null);
+    }
+  }, [deleteTarget, addToast]);
 
+  const handleRenameNotebook = useCallback(
+    async (notebookId: string, newTitle: string) => {
+      const previous = notebooks.find((n) => n.id === notebookId);
+      // Optimistic update
+      setNotebooks((prev) =>
+        prev.map((n) => (n.id === notebookId ? { ...n, title: newTitle } : n))
+      );
       try {
-        await notebooksAPI.delete(notebookId);
-        setNotebooks((prev) => prev.filter((n) => n.id !== notebookId));
+        await notebooksAPI.update(notebookId, { title: newTitle });
+        addToast('Notebook renamed', 'success');
       } catch (err) {
-        console.error('Delete notebook error:', err);
-        setError('Failed to delete notebook');
+        console.error('Rename notebook error:', err);
+        // Revert on failure
+        if (previous) {
+          setNotebooks((prev) => prev.map((n) => (n.id === notebookId ? previous : n)));
+        }
+        addToast('Failed to rename notebook', 'error');
       }
     },
-    []
+    [notebooks, addToast]
   );
 
   const handleOpenNotebook = useCallback(
@@ -234,7 +272,8 @@ const NotebookDashboard: React.FC = () => {
                   content={notebook.content}
                   updatedAt={notebook.updatedAt}
                   onClick={() => handleOpenNotebook(notebook.id)}
-                  onDelete={(e) => handleDeleteNotebook(e, notebook.id, notebook.title)}
+                  onDelete={() => handleDeleteNotebook(notebook.id, notebook.title)}
+                  onRename={(newTitle) => handleRenameNotebook(notebook.id, newTitle)}
                 />
               ))}
             </div>
@@ -276,7 +315,8 @@ const NotebookDashboard: React.FC = () => {
                     content={notebook.content}
                     updatedAt={notebook.updatedAt}
                     onClick={() => handleOpenNotebook(notebook.id)}
-                    onDelete={(e) => handleDeleteNotebook(e, notebook.id, notebook.title)}
+                    onDelete={() => handleDeleteNotebook(notebook.id, notebook.title)}
+                    onRename={(newTitle) => handleRenameNotebook(notebook.id, newTitle)}
                   />
                 ))}
               </div>
@@ -323,6 +363,46 @@ const NotebookDashboard: React.FC = () => {
         </div>
       )}
 
+      {/* Delete Confirmation Modal */}
+      {deleteTarget && (
+        <div
+          className="modal-overlay"
+          onClick={() => {
+            if (!isDeleting) setDeleteTarget(null);
+          }}
+        >
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Delete notebook</h2>
+              <button
+                className="modal-close"
+                onClick={() => setDeleteTarget(null)}
+                disabled={isDeleting}
+              >
+                ×
+              </button>
+            </div>
+            <div className="modal-body">
+              <p>
+                Delete <strong>"{deleteTarget.title}"</strong>? This cannot be undone.
+              </p>
+            </div>
+            <div className="modal-footer">
+              <button
+                className="btn-cancel"
+                onClick={() => setDeleteTarget(null)}
+                disabled={isDeleting}
+              >
+                Cancel
+              </button>
+              <button className="btn-delete" onClick={confirmDelete} disabled={isDeleting}>
+                {isDeleting ? 'Deleting...' : 'Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Floating Action Button for quick create */}
       {notebooks.length > 0 && (
         <button
@@ -334,6 +414,15 @@ const NotebookDashboard: React.FC = () => {
           +
         </button>
       )}
+
+      {/* Toast notifications */}
+      <div className="toast-container">
+        {toasts.map((t) => (
+          <div key={t.id} className={`toast toast-${t.type}`}>
+            {t.message}
+          </div>
+        ))}
+      </div>
     </div>
   );
 };

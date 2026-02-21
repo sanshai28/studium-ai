@@ -437,7 +437,12 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.notebook-card-menu {
+.notebook-card-menu-wrapper {
+  position: relative;
+  z-index: 1;
+}
+
+.notebook-card-menu-btn {
   background: rgba(255, 255, 255, 0.2);
   backdrop-filter: blur(8px);
   border: none;
@@ -453,17 +458,135 @@
   opacity: 0;
   transform: scale(0.8);
   transition: all var(--duration-normal) var(--ease-out);
-  position: relative;
-  z-index: 1;
+  letter-spacing: -1px;
 }
 
-.notebook-card:hover .notebook-card-menu {
+.notebook-card:hover .notebook-card-menu-btn {
   opacity: 1;
   transform: scale(1);
 }
 
-.notebook-card-menu:hover {
+.notebook-card-menu-btn:hover {
   background: rgba(255, 255, 255, 0.35);
+}
+
+/* Card context menu dropdown */
+.card-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  z-index: var(--z-dropdown, 100);
+  min-width: 140px;
+  overflow: hidden;
+}
+
+.card-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  cursor: pointer;
+  font-size: 0.875rem;
+  color: var(--color-text-primary);
+  transition: background var(--duration-fast);
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+}
+
+.card-dropdown-item:hover {
+  background: var(--color-hover);
+}
+
+.card-dropdown-item.delete {
+  color: var(--color-error, #ef4444);
+}
+
+.card-dropdown-item.delete:hover {
+  background: rgba(239, 68, 68, 0.08);
+}
+
+/* Inline rename input on card body */
+.notebook-card-title-input {
+  width: 100%;
+  font-size: 0.9375rem;
+  font-weight: var(--font-weight-semibold);
+  font-family: inherit;
+  background: var(--color-background-secondary);
+  border: 1px solid var(--color-primary, #3b82f6);
+  border-radius: var(--radius-sm);
+  padding: var(--space-1) var(--space-2);
+  color: var(--color-text-primary);
+  outline: none;
+  box-sizing: border-box;
+}
+
+/* Delete button in modal footer */
+.btn-delete {
+  padding: var(--space-3) var(--space-6);
+  background: var(--color-error, #ef4444);
+  color: white;
+  border: none;
+  border-radius: var(--radius-full);
+  font-size: 0.9375rem;
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+  transition: opacity var(--duration-fast);
+}
+
+.btn-delete:not(:disabled):hover {
+  opacity: 0.85;
+}
+
+.btn-delete:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Toast notifications */
+.toast-container {
+  position: fixed;
+  bottom: var(--space-6);
+  right: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  z-index: 9999;
+  pointer-events: none;
+}
+
+.toast {
+  padding: var(--space-3) var(--space-5);
+  border-radius: var(--radius-lg);
+  font-size: 0.875rem;
+  font-weight: var(--font-weight-medium);
+  box-shadow: var(--shadow-lg);
+  animation: slideInToast 0.2s var(--ease-out, ease-out);
+  color: white;
+}
+
+.toast-success {
+  background: var(--color-success, #22c55e);
+}
+
+.toast-error {
+  background: var(--color-error, #ef4444);
+}
+
+@keyframes slideInToast {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
 }
 
 .notebook-card-body {
