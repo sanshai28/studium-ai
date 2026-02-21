@@ -28,6 +28,25 @@ export interface UpdateNotebookData {
   content?: string;
 }
 
+// Note types
+export interface Note {
+  id: string;
+  title: string;
+  content: string;
+  order: number;
+  notebookId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface NotesResponse {
+  notes: Note[];
+}
+
+export interface NoteResponse {
+  note: Note;
+}
+
 // Source types
 export interface Source {
   id: string;

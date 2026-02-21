@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { notebooksAPI, sourcesAPI, conversationsAPI } from '../utils/api';
+import { notebooksAPI, sourcesAPI, conversationsAPI, notesAPI } from '../utils/api';
 import { useAuth } from '../contexts/AuthContext';
 import { formatRelativeTime } from '../utils/formatDate';
 import SourcesPane from '../components/SourcesPane';
 import QAPane from '../components/QAPane';
 import NotesPane from '../components/NotesPane';
-import type { Notebook, Source, Message, Conversation } from '../types';
+import type { Notebook, Source, Message, Conversation, Note } from '../types';
 import '../styles/Notebooks.css';
 
 const Notebooks: React.FC = () => {
@@ -19,7 +19,9 @@ const Notebooks: React.FC = () => {
   const [sources, setSources] = useState<Source[]>([]);
   const [activeConversation, setActiveConversation] = useState<Conversation | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
-  const [notesContent, setNotesContent] = useState('');
+  const [notes, setNotes] = useState<Note[]>([]);
+  const [activeNoteId, setActiveNoteId] = useState<string | null>(null);
+  const [activeNoteContent, setActiveNoteContent] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
@@ -40,19 +42,28 @@ const Notebooks: React.FC = () => {
       setIsLoading(true);
       setError(null);
 
-      // Load notebook details
-      const notebookData = await notebooksAPI.getOne(id);
-      setNotebook(notebookData.notebook);
-      setNotesContent(notebookData.notebook.content);
+      // Load notebook details, sources, conversations, and notes in parallel
+      const [notebookData, sourcesData, convsData, notesData] = await Promise.all([
+        notebooksAPI.getOne(id),
+        sourcesAPI.getAll(id),
+        conversationsAPI.getAll(id),
+        notesAPI.getAll(id),
+      ]);
 
-      // Load sources
-      const sourcesData = await sourcesAPI.getAll(id);
+      setNotebook(notebookData.notebook);
       setSources(sourcesData.sources || []);
 
-      // Load or create conversation
-      const convsData = await conversationsAPI.getAll(id);
-      const convs = convsData.conversations || [];
+      const loadedNotes: Note[] = notesData.notes || [];
+      setNotes(loadedNotes);
+      if (loadedNotes.length > 0) {
+        setActiveNoteId(loadedNotes[0].id);
+        setActiveNoteContent(loadedNotes[0].content);
+      } else {
+        setActiveNoteId(null);
+        setActiveNoteContent('');
+      }
 
+      const convs = convsData.conversations || [];
       if (convs.length > 0) {
         setActiveConversation(convs[0]);
         loadMessages(convs[0].id);
@@ -90,20 +101,97 @@ const Notebooks: React.FC = () => {
     }
   }, [notebook, titleInput]);
 
-  const handleSaveNotes = useCallback(async () => {
-    if (!notebook) return;
+  const handleSaveNote = useCallback(async () => {
+    if (!notebook || !activeNoteId) return;
 
     try {
       setIsSaving(true);
-      await notebooksAPI.update(notebook.id, { content: notesContent });
+      await notesAPI.update(notebook.id, activeNoteId, { content: activeNoteContent });
       setLastSaved(new Date());
-      setNotebook((prev) => (prev ? { ...prev, content: notesContent } : prev));
     } catch (err) {
-      console.error('Save notes error:', err);
+      console.error('Save note error:', err);
     } finally {
       setIsSaving(false);
     }
-  }, [notebook, notesContent]);
+  }, [notebook, activeNoteId, activeNoteContent]);
+
+  const handleSelectNote = useCallback(
+    (noteId: string) => {
+      const note = notes.find((n) => n.id === noteId);
+      if (note) {
+        setActiveNoteId(noteId);
+        setActiveNoteContent(note.content);
+      }
+    },
+    [notes]
+  );
+
+  const handleCreateNote = useCallback(async () => {
+    if (!notebook) return;
+    try {
+      const data = await notesAPI.create(notebook.id);
+      const newNote: Note = data.note;
+      setNotes((prev) => [...prev, newNote]);
+      setActiveNoteId(newNote.id);
+      setActiveNoteContent(newNote.content);
+    } catch (err) {
+      console.error('Create note error:', err);
+    }
+  }, [notebook]);
+
+  const handleDeleteNote = useCallback(
+    async (noteId: string) => {
+      if (!notebook) return;
+      if (!window.confirm('Delete this note? This cannot be undone.')) return;
+      try {
+        await notesAPI.delete(notebook.id, noteId);
+        setNotes((prev) => {
+          const remaining = prev.filter((n) => n.id !== noteId);
+          if (activeNoteId === noteId) {
+            const sorted = [...remaining].sort((a, b) => a.order - b.order);
+            const next = sorted[0] ?? null;
+            setActiveNoteId(next?.id ?? null);
+            setActiveNoteContent(next?.content ?? '');
+          }
+          return remaining;
+        });
+      } catch (err) {
+        console.error('Delete note error:', err);
+      }
+    },
+    [notebook, activeNoteId]
+  );
+
+  const handleRenameNote = useCallback(
+    async (noteId: string, newTitle: string) => {
+      if (!notebook) return;
+      try {
+        await notesAPI.update(notebook.id, noteId, { title: newTitle });
+        setNotes((prev) => prev.map((n) => (n.id === noteId ? { ...n, title: newTitle } : n)));
+      } catch (err) {
+        console.error('Rename note error:', err);
+      }
+    },
+    [notebook]
+  );
+
+  const handleReorderNotes = useCallback(
+    async (noteIds: string[]) => {
+      if (!notebook) return;
+      try {
+        const data = await notesAPI.reorder(notebook.id, noteIds);
+        setNotes(data.notes);
+      } catch (err) {
+        console.error('Reorder notes error:', err);
+      }
+    },
+    [notebook]
+  );
+
+  const handleNoteContentChange = useCallback((noteId: string, content: string) => {
+    setActiveNoteContent(content);
+    setNotes((prev) => prev.map((n) => (n.id === noteId ? { ...n, content } : n)));
+  }, []);
 
   const handleSourcesChange = useCallback(() => {
     if (notebookId) {
@@ -120,11 +208,30 @@ const Notebooks: React.FC = () => {
   }, [activeConversation]);
 
   const handleAddToNotes = useCallback(
-    (content: string) => {
-      const separator = notesContent ? '\n\n---\n\n' : '';
-      setNotesContent(notesContent + separator + content);
+    async (content: string) => {
+      if (!notebook) return;
+
+      if (activeNoteId) {
+        const separator = activeNoteContent ? '\n\n---\n\n' : '';
+        const newContent = activeNoteContent + separator + content;
+        setActiveNoteContent(newContent);
+        setNotes((prev) =>
+          prev.map((n) => (n.id === activeNoteId ? { ...n, content: newContent } : n))
+        );
+      } else {
+        // No active note — create one with this content
+        try {
+          const data = await notesAPI.create(notebook.id, { title: 'From Q&A', content });
+          const newNote: Note = data.note;
+          setNotes((prev) => [...prev, newNote]);
+          setActiveNoteId(newNote.id);
+          setActiveNoteContent(newNote.content);
+        } catch (err) {
+          console.error('Create note from Q&A error:', err);
+        }
+      }
     },
-    [notesContent]
+    [notebook, activeNoteId, activeNoteContent]
   );
 
   const handleDelete = useCallback(async () => {
@@ -259,9 +366,15 @@ const Notebooks: React.FC = () => {
           />
 
           <NotesPane
-            content={notesContent}
-            onContentChange={setNotesContent}
-            onSave={handleSaveNotes}
+            notes={notes}
+            activeNoteId={activeNoteId}
+            onSelectNote={handleSelectNote}
+            onCreateNote={handleCreateNote}
+            onDeleteNote={handleDeleteNote}
+            onRenameNote={handleRenameNote}
+            onReorderNotes={handleReorderNotes}
+            onContentChange={handleNoteContentChange}
+            onSave={handleSaveNote}
             isSaving={isSaving}
             lastSaved={lastSaved}
           />

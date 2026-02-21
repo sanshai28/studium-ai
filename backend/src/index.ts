@@ -5,6 +5,7 @@ import authRoutes from './routes/authRoutes';
 import notebookRoutes from './routes/notebookRoutes';
 import sourceRoutes from './routes/sourceRoutes';
 import conversationRoutes from './routes/conversationRoutes';
+import noteRoutes from './routes/noteRoutes';
 import corsOptions from './config/cors.config';
 import clientDetection from './middleware/clientDetection';
 import { errorHandler } from './middleware/errorHandler';
@@ -29,6 +30,7 @@ app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/notebooks', notebookRoutes);
 app.use('/api/v1', sourceRoutes);
 app.use('/api/v1', conversationRoutes);
+app.use('/api/v1', noteRoutes);
 
 // Health check endpoint
 app.get('/api/health', (_req, res) => {
@@ -54,6 +56,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/notebooks', notebookRoutes);
 app.use('/api', sourceRoutes);
 app.use('/api', conversationRoutes);
+app.use('/api', noteRoutes);
 
 // Global error handler - must be last middleware
 app.use(errorHandler);
