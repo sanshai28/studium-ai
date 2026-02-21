@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { formatLastSaved } from '../utils/formatDate';
 import type { Note } from '../types';
+import RichTextEditor from './RichTextEditor';
 
 interface NotesPaneProps {
   notes: Note[];
@@ -30,43 +31,24 @@ const NotesPane: React.FC<NotesPaneProps> = ({
   lastSaved,
 }) => {
   const activeNote = notes.find((n) => n.id === activeNoteId) ?? null;
-  const [localContent, setLocalContent] = useState(activeNote?.content ?? '');
   const [renamingNoteId, setRenamingNoteId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState('');
   const [dragOverId, setDragOverId] = useState<string | null>(null);
+  // Title editing state for the inline editor header
+  const [titleEditing, setTitleEditing] = useState(false);
+  const [titleValue, setTitleValue] = useState('');
   const dragIdRef = useRef<string | null>(null);
-  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Sync local content when active note changes
-  useEffect(() => {
-    setLocalContent(activeNote?.content ?? '');
-  }, [activeNoteId, activeNote?.content]);
-
-  const handleChange = useCallback(
-    (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-      const newContent = e.target.value;
-      setLocalContent(newContent);
+  const handleEditorChange = useCallback(
+    (html: string) => {
       if (activeNoteId) {
-        onContentChange(activeNoteId, newContent);
+        onContentChange(activeNoteId, html);
       }
-
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current);
-      }
-      saveTimeoutRef.current = setTimeout(() => {
-        onSave();
-      }, 2000);
     },
-    [activeNoteId, onContentChange, onSave]
+    [activeNoteId, onContentChange]
   );
 
-  const handleManualSave = useCallback(() => {
-    if (saveTimeoutRef.current) {
-      clearTimeout(saveTimeoutRef.current);
-    }
-    onSave();
-  }, [onSave]);
-
+  // Sidebar rename (in-list)
   const startRename = useCallback((note: Note) => {
     setRenamingNoteId(note.id);
     setRenameValue(note.title);
@@ -89,6 +71,28 @@ const NotesPane: React.FC<NotesPaneProps> = ({
       }
     },
     [commitRename]
+  );
+
+  // Inline title editing (editor area header)
+  const startTitleEdit = useCallback(() => {
+    if (!activeNote) return;
+    setTitleEditing(true);
+    setTitleValue(activeNote.title);
+  }, [activeNote]);
+
+  const commitTitleEdit = useCallback(() => {
+    if (activeNoteId && titleValue.trim()) {
+      onRenameNote(activeNoteId, titleValue.trim());
+    }
+    setTitleEditing(false);
+  }, [activeNoteId, titleValue, onRenameNote]);
+
+  const handleTitleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === 'Enter') commitTitleEdit();
+      if (e.key === 'Escape') setTitleEditing(false);
+    },
+    [commitTitleEdit]
   );
 
   // Drag-and-drop handlers
@@ -136,7 +140,7 @@ const NotesPane: React.FC<NotesPaneProps> = ({
           <button className="btn-add-note" onClick={onCreateNote} title="New note">
             + New
           </button>
-          <button className="save-btn" onClick={handleManualSave} disabled={isSaving}>
+          <button className="save-btn" onClick={onSave} disabled={isSaving}>
             {isSaving ? 'Saving...' : 'Save'}
           </button>
         </div>
@@ -198,15 +202,36 @@ const NotesPane: React.FC<NotesPaneProps> = ({
         <div className="notes-editor-area">
           {activeNote ? (
             <>
-              <textarea
-                className="notes-textarea"
-                value={localContent}
-                onChange={handleChange}
-                placeholder="Take notes here... Content from Q&A can be added using the 📝 button."
+              {/* Inline editable title */}
+              <div className="note-editor-title-bar">
+                {titleEditing ? (
+                  <input
+                    className="note-title-input"
+                    value={titleValue}
+                    onChange={(e) => setTitleValue(e.target.value)}
+                    onBlur={commitTitleEdit}
+                    onKeyDown={handleTitleKeyDown}
+                    autoFocus
+                  />
+                ) : (
+                  <h2 className="note-editor-title" onClick={startTitleEdit} title="Click to rename">
+                    {activeNote.title}
+                  </h2>
+                )}
+              </div>
+
+              <RichTextEditor
+                key={activeNote.id}
+                content={activeNote.content}
+                onChange={handleEditorChange}
+                onSave={onSave}
               />
+
               <div className="notes-footer">
-                <span className="save-status">{formatLastSaved(lastSaved)}</span>
-                <span className="char-count">{localContent.length} characters</span>
+                <span className="save-status">
+                  {isSaving ? 'Saving...' : formatLastSaved(lastSaved)}
+                </span>
+                <span className="save-hint">Ctrl+S to save</span>
               </div>
             </>
           ) : (

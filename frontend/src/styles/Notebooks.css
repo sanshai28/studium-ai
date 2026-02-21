@@ -1451,6 +1451,329 @@
   cursor: wait;
 }
 
+/* ===== Rich Text Editor ===== */
+
+/* Note editor title bar */
+.note-editor-title-bar {
+  padding: var(--space-3) var(--space-4) 0;
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.note-editor-title {
+  margin: 0 0 var(--space-2);
+  font-size: 1.125rem;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  padding: var(--space-1) var(--space-2);
+  transition: background var(--duration-fast);
+}
+
+.note-editor-title:hover {
+  background: rgba(102, 126, 234, 0.06);
+}
+
+.note-title-input {
+  width: 100%;
+  font-size: 1.125rem;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  background: transparent;
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-sm);
+  padding: var(--space-1) var(--space-2);
+  outline: none;
+  margin-bottom: var(--space-2);
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+/* Rich editor wrapper — fills the editor area */
+.rich-editor-wrapper {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* Toolbar */
+.rich-editor-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px;
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--color-border-light);
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  flex-shrink: 0;
+}
+
+.toolbar-group {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+}
+
+.toolbar-divider {
+  width: 1px;
+  height: 18px;
+  background: var(--color-border-light);
+  margin: 0 var(--space-1);
+  flex-shrink: 0;
+}
+
+.toolbar-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all var(--duration-fast);
+  font-family: inherit;
+  line-height: 1;
+}
+
+.toolbar-btn:hover:not(:disabled) {
+  background: rgba(102, 126, 234, 0.08);
+  color: var(--color-text-primary);
+  border-color: var(--color-border-light);
+}
+
+.toolbar-btn.is-active {
+  background: rgba(102, 126, 234, 0.15);
+  color: var(--color-primary);
+  border-color: rgba(102, 126, 234, 0.3);
+}
+
+.toolbar-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* Link popover */
+.toolbar-link-group {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.toolbar-link-popover {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  background: white;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-1) var(--space-2);
+  box-shadow: var(--shadow-lg);
+  min-width: 200px;
+}
+
+.toolbar-link-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 0.8125rem;
+  color: var(--color-text-primary);
+  background: transparent;
+  font-family: inherit;
+}
+
+.toolbar-link-confirm {
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  width: 22px;
+  height: 22px;
+  cursor: pointer;
+  font-size: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* Bubble menu (floating toolbar on text selection) */
+.rich-editor-bubble {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: var(--space-1) var(--space-2);
+  background: white;
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+}
+
+.rich-editor-bubble .toolbar-btn {
+  width: 26px;
+  height: 26px;
+}
+
+/* Editor content area */
+.rich-editor-content {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.rich-editor-content .ProseMirror {
+  min-height: 100%;
+  padding: var(--space-4);
+  outline: none;
+  font-size: 0.9375rem;
+  line-height: 1.75;
+  color: var(--color-text-primary);
+  font-family: inherit;
+}
+
+/* Placeholder */
+.rich-editor-content .ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: var(--color-text-tertiary);
+  pointer-events: none;
+  height: 0;
+}
+
+/* Typography inside editor */
+.rich-editor-content .ProseMirror h1 {
+  font-size: 1.5rem;
+  font-weight: var(--font-weight-bold);
+  margin: var(--space-4) 0 var(--space-2);
+  color: var(--color-text-primary);
+}
+
+.rich-editor-content .ProseMirror h2 {
+  font-size: 1.25rem;
+  font-weight: var(--font-weight-semibold);
+  margin: var(--space-4) 0 var(--space-2);
+  color: var(--color-text-primary);
+}
+
+.rich-editor-content .ProseMirror h3 {
+  font-size: 1.0625rem;
+  font-weight: var(--font-weight-semibold);
+  margin: var(--space-3) 0 var(--space-1);
+  color: var(--color-text-primary);
+}
+
+.rich-editor-content .ProseMirror p {
+  margin: 0 0 var(--space-2);
+}
+
+.rich-editor-content .ProseMirror ul,
+.rich-editor-content .ProseMirror ol {
+  padding-left: var(--space-6);
+  margin: 0 0 var(--space-2);
+}
+
+.rich-editor-content .ProseMirror li {
+  margin-bottom: var(--space-1);
+}
+
+.rich-editor-content .ProseMirror blockquote {
+  border-left: 3px solid var(--color-primary);
+  padding-left: var(--space-4);
+  margin: var(--space-3) 0;
+  color: var(--color-text-secondary);
+  font-style: italic;
+}
+
+.rich-editor-content .ProseMirror code {
+  background: rgba(102, 126, 234, 0.08);
+  border: 1px solid rgba(102, 126, 234, 0.15);
+  border-radius: var(--radius-sm);
+  padding: 1px 5px;
+  font-size: 0.875em;
+  font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+  color: var(--color-primary);
+}
+
+.rich-editor-content .ProseMirror pre {
+  background: #1e1e2e;
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  margin: var(--space-3) 0;
+  overflow-x: auto;
+}
+
+.rich-editor-content .ProseMirror pre code {
+  background: none;
+  border: none;
+  padding: 0;
+  color: #cdd6f4;
+  font-size: 0.875rem;
+}
+
+.rich-editor-content .ProseMirror hr {
+  border: none;
+  border-top: 1px solid var(--color-border-light);
+  margin: var(--space-4) 0;
+}
+
+.rich-editor-content .ProseMirror a {
+  color: var(--color-primary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.rich-editor-content .ProseMirror a:hover {
+  opacity: 0.8;
+}
+
+/* Task list (checklist) */
+.rich-editor-content .ProseMirror ul[data-type='taskList'] {
+  list-style: none;
+  padding-left: var(--space-2);
+}
+
+.rich-editor-content .ProseMirror ul[data-type='taskList'] li {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+
+.rich-editor-content .ProseMirror ul[data-type='taskList'] li > label {
+  flex-shrink: 0;
+  margin-top: 3px;
+}
+
+.rich-editor-content .ProseMirror ul[data-type='taskList'] li > div {
+  flex: 1;
+}
+
+.rich-editor-content .ProseMirror ul[data-type='taskList'] input[type='checkbox'] {
+  accent-color: var(--color-primary);
+  width: 14px;
+  height: 14px;
+  cursor: pointer;
+}
+
+/* Save hint in footer */
+.save-hint {
+  font-size: 0.75rem;
+  color: var(--color-text-tertiary);
+}
+
+/* ===== End Rich Text Editor ===== */
+
 /* Premium Empty States */
 .empty-state {
   display: flex;

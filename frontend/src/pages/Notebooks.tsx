@@ -212,8 +212,9 @@ const Notebooks: React.FC = () => {
       if (!notebook) return;
 
       if (activeNoteId) {
-        const separator = activeNoteContent ? '\n\n---\n\n' : '';
-        const newContent = activeNoteContent + separator + content;
+        const isEmpty = !activeNoteContent || activeNoteContent === '<p></p>';
+        const separator = isEmpty ? '' : '<hr />';
+        const newContent = (isEmpty ? '' : activeNoteContent) + separator + `<p>${content}</p>`;
         setActiveNoteContent(newContent);
         setNotes((prev) =>
           prev.map((n) => (n.id === activeNoteId ? { ...n, content: newContent } : n))
@@ -221,7 +222,7 @@ const Notebooks: React.FC = () => {
       } else {
         // No active note — create one with this content
         try {
-          const data = await notesAPI.create(notebook.id, { title: 'From Q&A', content });
+          const data = await notesAPI.create(notebook.id, { title: 'From Q&A', content: `<p>${content}</p>` });
           const newNote: Note = data.note;
           setNotes((prev) => [...prev, newNote]);
           setActiveNoteId(newNote.id);
