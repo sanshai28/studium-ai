@@ -88,6 +88,50 @@ export const sendMessageSchema = z.object({
   }),
 });
 
+// Note validation schemas
+export const noteParamsSchema = z.object({
+  params: z.object({
+    notebookId: z.string().uuid('Invalid notebook ID'),
+  }),
+});
+
+export const noteIdParamsSchema = z.object({
+  params: z.object({
+    notebookId: z.string().uuid('Invalid notebook ID'),
+    noteId: z.string().uuid('Invalid note ID'),
+  }),
+});
+
+export const createNoteSchema = z.object({
+  params: z.object({
+    notebookId: z.string().uuid('Invalid notebook ID'),
+  }),
+  body: z.object({
+    title: z.string().min(1).max(255).optional(),
+    content: z.string().optional(),
+  }),
+});
+
+export const updateNoteSchema = z.object({
+  params: z.object({
+    notebookId: z.string().uuid('Invalid notebook ID'),
+    noteId: z.string().uuid('Invalid note ID'),
+  }),
+  body: z.object({
+    title: z.string().min(1).max(255).optional(),
+    content: z.string().optional(),
+  }),
+});
+
+export const reorderNotesSchema = z.object({
+  params: z.object({
+    notebookId: z.string().uuid('Invalid notebook ID'),
+  }),
+  body: z.object({
+    noteIds: z.array(z.string().uuid()).min(1, 'At least one note ID required'),
+  }),
+});
+
 // Type exports for use in controllers
 export type SignupInput = z.infer<typeof signupSchema>['body'];
 export type SigninInput = z.infer<typeof signinSchema>['body'];

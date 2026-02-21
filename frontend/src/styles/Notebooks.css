@@ -1189,7 +1189,184 @@
   box-shadow: none;
 }
 
-/* Notes Pane - Premium Editor */
+/* Notes Pane - Multi-note layout */
+.notes-header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.btn-add-note {
+  padding: var(--space-1) var(--space-3);
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  font-size: 0.8rem;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all var(--duration-fast);
+}
+
+.btn-add-note:hover {
+  background: rgba(102, 126, 234, 0.08);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.notes-pane-body {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* Notes sidebar */
+.notes-sidebar {
+  width: 170px;
+  min-width: 140px;
+  border-right: 1px solid var(--color-border-light);
+  overflow-y: auto;
+  background: rgba(255, 255, 255, 0.4);
+  flex-shrink: 0;
+}
+
+.notes-sidebar-empty {
+  padding: var(--space-4) var(--space-3);
+  font-size: 0.8rem;
+  color: var(--color-text-tertiary);
+  text-align: center;
+}
+
+.note-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-3);
+  cursor: pointer;
+  border-left: 3px solid transparent;
+  transition: background var(--duration-fast), border-color var(--duration-fast);
+  gap: var(--space-1);
+  min-height: 40px;
+}
+
+.note-item:hover {
+  background: rgba(102, 126, 234, 0.05);
+}
+
+.note-item.active {
+  background: rgba(102, 126, 234, 0.1);
+  border-left-color: var(--color-primary);
+}
+
+.note-item.drag-over {
+  border-top: 2px solid var(--color-primary);
+  background: rgba(102, 126, 234, 0.08);
+}
+
+.note-title {
+  flex: 1;
+  font-size: 0.8125rem;
+  color: var(--color-text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.note-rename-input {
+  flex: 1;
+  font-size: 0.8125rem;
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-sm);
+  padding: 2px var(--space-1);
+  outline: none;
+  background: white;
+  color: var(--color-text-primary);
+  min-width: 0;
+}
+
+.note-item-actions {
+  display: flex;
+  gap: 2px;
+  opacity: 0;
+  flex-shrink: 0;
+  transition: opacity var(--duration-fast);
+}
+
+.note-item:hover .note-item-actions {
+  opacity: 1;
+}
+
+.btn-note-action {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px;
+  font-size: 0.75rem;
+  line-height: 1;
+  border-radius: var(--radius-sm);
+  transition: background var(--duration-fast);
+}
+
+.btn-note-action:hover {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+/* Notes editor area */
+.notes-editor-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.notes-textarea {
+  flex: 1;
+  padding: var(--space-4);
+  border: none;
+  font-size: 0.9375rem;
+  font-family: inherit;
+  line-height: 1.75;
+  resize: none;
+  color: var(--color-text-primary);
+  background: transparent;
+  outline: none;
+}
+
+.notes-textarea::placeholder {
+  color: var(--color-text-tertiary);
+}
+
+.notes-empty-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  color: var(--color-text-secondary);
+  font-size: 0.9rem;
+}
+
+.btn-add-note-empty {
+  padding: var(--space-2) var(--space-5);
+  background: var(--gradient-primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius-full);
+  font-size: 0.875rem;
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+  transition: all var(--duration-normal) var(--ease-out);
+  box-shadow: var(--shadow-primary);
+}
+
+.btn-add-note-empty:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-primary-lg);
+}
+
+/* Legacy class kept for backward compat */
 .notes-editor {
   flex: 1;
   display: flex;
@@ -1398,6 +1575,11 @@
 
   .notes-pane {
     border-bottom: none;
+  }
+
+  .notes-sidebar {
+    width: 130px;
+    min-width: 110px;
   }
 }
 

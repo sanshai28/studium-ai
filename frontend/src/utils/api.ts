@@ -117,4 +117,31 @@ export const conversationsAPI = {
   },
 };
 
+export const notesAPI = {
+  getAll: async (notebookId: string) => {
+    const response = await api.get(`/notebooks/${notebookId}/notes`);
+    return response.data;
+  },
+
+  create: async (notebookId: string, data?: { title?: string; content?: string }) => {
+    const response = await api.post(`/notebooks/${notebookId}/notes`, data || {});
+    return response.data;
+  },
+
+  update: async (notebookId: string, noteId: string, data: { title?: string; content?: string }) => {
+    const response = await api.put(`/notebooks/${notebookId}/notes/${noteId}`, data);
+    return response.data;
+  },
+
+  delete: async (notebookId: string, noteId: string) => {
+    const response = await api.delete(`/notebooks/${notebookId}/notes/${noteId}`);
+    return response.data;
+  },
+
+  reorder: async (notebookId: string, noteIds: string[]) => {
+    const response = await api.put(`/notebooks/${notebookId}/notes/reorder`, { noteIds });
+    return response.data;
+  },
+};
+
 export default api;
