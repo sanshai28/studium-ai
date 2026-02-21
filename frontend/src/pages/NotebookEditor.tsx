@@ -56,7 +56,7 @@ const NotebookEditor: React.FC = () => {
       if (isEditMode && id) {
         await notebooksAPI.update(id, { title, content });
       } else {
-        await notebooksAPI.create({ title, content });
+        await notebooksAPI.create({ title, content, defaultMethod: 'blank' });
       }
 
       navigate('/notebooks');

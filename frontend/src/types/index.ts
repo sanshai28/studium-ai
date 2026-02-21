@@ -10,10 +10,13 @@ export interface User {
 }
 
 // Notebook types
+export type NotebookMethod = 'cornell' | 'sentence' | 'outlining' | 'charting' | 'blank';
+
 export interface Notebook {
   id: string;
   title: string;
   content: string;
+  defaultMethod: NotebookMethod;
   createdAt: string;
   updatedAt: string;
 }
@@ -21,6 +24,7 @@ export interface Notebook {
 export interface CreateNotebookData {
   title: string;
   content: string;
+  defaultMethod: NotebookMethod;
 }
 
 export interface UpdateNotebookData {

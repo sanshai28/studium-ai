@@ -4,7 +4,8 @@ import { notebooksAPI } from '../utils/api';
 import { useAuth } from '../contexts/AuthContext';
 import NotebookCard from '../components/NotebookCard';
 import { AnimatedBackground } from '../components/backgrounds';
-import type { Notebook } from '../types';
+import { METHODS } from '../constants/noteMethods';
+import type { Notebook, NotebookMethod } from '../types';
 import '../styles/NotebookDashboard.css';
 
 interface Toast {
@@ -23,6 +24,8 @@ const NotebookDashboard: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [createStep, setCreateStep] = useState<1 | 2>(1);
+  const [selectedMethod, setSelectedMethod] = useState<NotebookMethod | null>(null);
   const [newNotebookTitle, setNewNotebookTitle] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string } | null>(null);
@@ -54,17 +57,26 @@ const NotebookDashboard: React.FC = () => {
     setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 3000);
   }, []);
 
+  const openCreateModal = useCallback(() => {
+    setCreateStep(1);
+    setSelectedMethod(null);
+    setNewNotebookTitle('');
+    setShowCreateModal(true);
+  }, []);
+
   const handleCreateNotebook = useCallback(async () => {
-    if (!newNotebookTitle.trim()) return;
+    if (!newNotebookTitle.trim() || !selectedMethod) return;
 
     try {
       setIsCreating(true);
       const data = await notebooksAPI.create({
         title: newNotebookTitle.trim(),
         content: '',
+        defaultMethod: selectedMethod,
       });
       setShowCreateModal(false);
       setNewNotebookTitle('');
+      setSelectedMethod(null);
       navigate(`/notebooks/${data.notebook.id}`);
     } catch (err) {
       console.error('Create notebook error:', err);
@@ -72,23 +84,7 @@ const NotebookDashboard: React.FC = () => {
     } finally {
       setIsCreating(false);
     }
-  }, [newNotebookTitle, navigate]);
-
-  const handleQuickCreate = useCallback(async () => {
-    try {
-      setIsCreating(true);
-      const data = await notebooksAPI.create({
-        title: 'Untitled notebook',
-        content: '',
-      });
-      navigate(`/notebooks/${data.notebook.id}`);
-    } catch (err) {
-      console.error('Create notebook error:', err);
-      setError('Failed to create notebook');
-    } finally {
-      setIsCreating(false);
-    }
-  }, [navigate]);
+  }, [newNotebookTitle, selectedMethod, navigate]);
 
   const handleDeleteNotebook = useCallback((notebookId: string, title: string) => {
     setDeleteTarget({ id: notebookId, title });
@@ -113,7 +109,6 @@ const NotebookDashboard: React.FC = () => {
   const handleRenameNotebook = useCallback(
     async (notebookId: string, newTitle: string) => {
       const previous = notebooks.find((n) => n.id === notebookId);
-      // Optimistic update
       setNotebooks((prev) =>
         prev.map((n) => (n.id === notebookId ? { ...n, title: newTitle } : n))
       );
@@ -122,7 +117,6 @@ const NotebookDashboard: React.FC = () => {
         addToast('Notebook renamed', 'success');
       } catch (err) {
         console.error('Rename notebook error:', err);
-        // Revert on failure
         if (previous) {
           setNotebooks((prev) => prev.map((n) => (n.id === notebookId ? previous : n)));
         }
@@ -166,6 +160,8 @@ const NotebookDashboard: React.FC = () => {
         .slice(0, 4),
     [notebooks]
   );
+
+  const activeMethod = METHODS.find((m) => m.id === selectedMethod);
 
   // Loading state
   if (isLoading) {
@@ -237,7 +233,7 @@ const NotebookDashboard: React.FC = () => {
                 Upload your documents, ask questions, and take notes with AI-powered assistance.
                 Create your first notebook to get started.
               </p>
-              <button className="btn-create-hero" onClick={() => setShowCreateModal(true)}>
+              <button className="btn-create-hero" onClick={openCreateModal}>
                 <span>+</span> Create your first notebook
               </button>
             </div>
@@ -256,14 +252,12 @@ const NotebookDashboard: React.FC = () => {
               <h2>Recent notebooks</h2>
             </div>
             <div className="notebooks-grid">
-              {/* Create New Card */}
-              <div className="notebook-card create-card" onClick={() => setShowCreateModal(true)}>
+              <div className="notebook-card create-card" onClick={openCreateModal}>
                 <div className="create-card-content">
                   <div className="create-icon">+</div>
                   <span>New notebook</span>
                 </div>
               </div>
-
               {recentNotebooks.map((notebook) => (
                 <NotebookCard
                   key={notebook.id}
@@ -280,7 +274,7 @@ const NotebookDashboard: React.FC = () => {
           </section>
         )}
 
-        {/* All Notebooks (shown when there are more than 4 or when searching) */}
+        {/* All Notebooks */}
         {(notebooks.length > 4 || searchQuery) && (
           <section className="notebooks-section">
             <div className="section-header">
@@ -297,10 +291,7 @@ const NotebookDashboard: React.FC = () => {
             ) : (
               <div className="notebooks-grid">
                 {!searchQuery && (
-                  <div
-                    className="notebook-card create-card"
-                    onClick={() => setShowCreateModal(true)}
-                  >
+                  <div className="notebook-card create-card" onClick={openCreateModal}>
                     <div className="create-card-content">
                       <div className="create-icon">+</div>
                       <span>New notebook</span>
@@ -325,40 +316,86 @@ const NotebookDashboard: React.FC = () => {
         )}
       </main>
 
-      {/* Create Notebook Modal */}
+      {/* Create Notebook Modal — 2-step */}
       {showCreateModal && (
         <div className="modal-overlay" onClick={() => setShowCreateModal(false)}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>Create new notebook</h2>
-              <button className="modal-close" onClick={() => setShowCreateModal(false)}>
-                ×
-              </button>
-            </div>
-            <div className="modal-body">
-              <label htmlFor="notebook-title">Notebook name</label>
-              <input
-                id="notebook-title"
-                type="text"
-                placeholder="Enter notebook name..."
-                value={newNotebookTitle}
-                onChange={(e) => setNewNotebookTitle(e.target.value)}
-                onKeyDown={handleCreateKeyDown}
-                autoFocus
-              />
-            </div>
-            <div className="modal-footer">
-              <button className="btn-cancel" onClick={() => setShowCreateModal(false)}>
-                Cancel
-              </button>
-              <button
-                className="btn-create"
-                onClick={handleCreateNotebook}
-                disabled={!newNotebookTitle.trim() || isCreating}
-              >
-                {isCreating ? 'Creating...' : 'Create'}
-              </button>
-            </div>
+          <div className="modal modal-wide" onClick={(e) => e.stopPropagation()}>
+            {/* Step 1: Template Selection */}
+            {createStep === 1 && (
+              <>
+                <div className="modal-header">
+                  <h2>Choose a note-taking method</h2>
+                  <button className="modal-close" onClick={() => setShowCreateModal(false)}>
+                    ×
+                  </button>
+                </div>
+                <div className="modal-body">
+                  <p className="method-subtitle">
+                    This will be the default for all notes in this notebook
+                  </p>
+                  <div className="method-grid">
+                    {METHODS.map((m) => (
+                      <button
+                        key={m.id}
+                        className={`method-card${selectedMethod === m.id ? ' selected' : ''}`}
+                        onClick={() => {
+                          setSelectedMethod(m.id);
+                          setCreateStep(2);
+                        }}
+                      >
+                        <span className="method-icon">{m.icon}</span>
+                        <span className="method-name">{m.name}</span>
+                        <span className="method-desc">{m.description}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* Step 2: Notebook Name */}
+            {createStep === 2 && (
+              <>
+                <div className="modal-header">
+                  <h2>Name your notebook</h2>
+                  <button className="modal-close" onClick={() => setShowCreateModal(false)}>
+                    ×
+                  </button>
+                </div>
+                <div className="modal-body">
+                  {activeMethod && (
+                    <div className="selected-method-badge">
+                      {activeMethod.icon} {activeMethod.name}
+                    </div>
+                  )}
+                  <label htmlFor="notebook-title">Notebook name</label>
+                  <input
+                    id="notebook-title"
+                    type="text"
+                    placeholder="Enter notebook name..."
+                    value={newNotebookTitle}
+                    onChange={(e) => setNewNotebookTitle(e.target.value)}
+                    onKeyDown={handleCreateKeyDown}
+                    autoFocus
+                  />
+                </div>
+                <div className="modal-footer">
+                  <button className="btn-back" onClick={() => setCreateStep(1)}>
+                    ← Back
+                  </button>
+                  <button className="btn-cancel" onClick={() => setShowCreateModal(false)}>
+                    Cancel
+                  </button>
+                  <button
+                    className="btn-create"
+                    onClick={handleCreateNotebook}
+                    disabled={!newNotebookTitle.trim() || isCreating}
+                  >
+                    {isCreating ? 'Creating...' : 'Create'}
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}
@@ -403,11 +440,11 @@ const NotebookDashboard: React.FC = () => {
         </div>
       )}
 
-      {/* Floating Action Button for quick create */}
+      {/* Floating Action Button */}
       {notebooks.length > 0 && (
         <button
           className="fab"
-          onClick={handleQuickCreate}
+          onClick={openCreateModal}
           disabled={isCreating}
           title="Create new notebook"
         >

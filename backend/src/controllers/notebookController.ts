@@ -13,6 +13,7 @@ export const getAllNotebooks = async (req: AuthRequest, res: Response): Promise<
       id: true,
       title: true,
       content: true,
+      defaultMethod: true,
       createdAt: true,
       updatedAt: true,
     },
@@ -42,7 +43,7 @@ export const getNotebook = async (req: AuthRequest, res: Response): Promise<void
 
 export const createNotebook = async (req: AuthRequest, res: Response): Promise<void> => {
   const userId = req.userId!;
-  const { title, content = '' } = req.body;
+  const { title, content = '', defaultMethod = 'blank' } = req.body;
 
   if (!title) {
     throw new BadRequestError('Title is required');
@@ -52,6 +53,7 @@ export const createNotebook = async (req: AuthRequest, res: Response): Promise<v
     data: {
       title,
       content,
+      defaultMethod,
       userId,
     },
   });

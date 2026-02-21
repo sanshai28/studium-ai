@@ -60,6 +60,7 @@ studium-ai/
 │   ├── prisma/
 │   │   └── schema.prisma    # Database models
 │   ├── src/
+│   │   ├── constants/       # Domain constants (e.g. noteTemplates.ts)
 │   │   ├── controllers/     # Request handlers
 │   │   ├── routes/          # API route definitions
 │   │   ├── services/        # Business logic (aiService)
@@ -70,6 +71,7 @@ studium-ai/
 ├── frontend/
 │   ├── src/
 │   │   ├── components/      # React components
+│   │   ├── constants/       # Domain constants (e.g. noteMethods.ts)
 │   │   ├── contexts/        # Auth context
 │   │   ├── pages/           # Page components
 │   │   ├── styles/          # CSS files
@@ -87,6 +89,12 @@ studium-ai/
 - **Message**: Individual messages in conversations
 
 ## Coding Conventions
+
+### Constants and No Hardcoding
+- **Never hardcode domain values** (templates, labels, enums, config strings) directly inside controllers, components, or services.
+- All such values must live in a dedicated constants file under `backend/src/constants/` or `frontend/src/constants/`, grouped by domain (e.g. `noteTemplates.ts`, `noteMethods.ts`).
+- Each constants file covers one functional domain. Create a new file when adding constants for a new domain — do not mix unrelated constants in one file.
+- Controllers and components import from the constants file; they never define the values themselves.
 
 ### TypeScript
 - Use `as string` for Express route params to avoid type errors
