@@ -49,7 +49,7 @@ export const notebooksAPI = {
     return response.data;
   },
 
-  update: async (id: string, notebook: { title?: string; content?: string }) => {
+  update: async (id: string, notebook: { title?: string; content?: string; defaultMethod?: string }) => {
     const response = await api.put(`/notebooks/${id}`, notebook);
     return response.data;
   },

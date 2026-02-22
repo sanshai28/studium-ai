@@ -639,6 +639,14 @@
   gap: var(--space-1);
 }
 
+.notebook-method-badge {
+  font-size: 0.75rem;
+  color: var(--color-text-secondary);
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
 /* Create Card - Premium */
 .notebook-card.create-card {
   border: 2px dashed var(--color-border);

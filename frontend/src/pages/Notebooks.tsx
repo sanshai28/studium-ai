@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { notebooksAPI, sourcesAPI, conversationsAPI, notesAPI } from '../utils/api';
 import { useAuth } from '../contexts/AuthContext';
@@ -6,7 +6,8 @@ import { formatRelativeTime } from '../utils/formatDate';
 import SourcesPane from '../components/SourcesPane';
 import QAPane from '../components/QAPane';
 import NotesPane from '../components/NotesPane';
-import type { Notebook, Source, Message, Conversation, Note } from '../types';
+import { METHODS } from '../constants/noteMethods';
+import type { Notebook, Source, Message, Conversation, Note, NotebookMethod } from '../types';
 import '../styles/Notebooks.css';
 
 const Notebooks: React.FC = () => {
@@ -28,6 +29,9 @@ const Notebooks: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleInput, setTitleInput] = useState('');
+  const [showMethodPicker, setShowMethodPicker] = useState(false);
+  const [isChangingMethod, setIsChangingMethod] = useState(false);
+  const methodPickerRef = useRef<HTMLDivElement>(null);
 
   // Load notebook data on mount or notebookId change
   useEffect(() => {
@@ -267,6 +271,38 @@ const Notebooks: React.FC = () => {
     [handleTitleSave]
   );
 
+  const handleChangeMethod = useCallback(
+    async (newMethod: NotebookMethod) => {
+      if (!notebook || newMethod === notebook.defaultMethod) {
+        setShowMethodPicker(false);
+        return;
+      }
+      setIsChangingMethod(true);
+      try {
+        const data = await notebooksAPI.update(notebook.id, { defaultMethod: newMethod });
+        setNotebook(data.notebook);
+      } catch (err) {
+        console.error('Change method error:', err);
+      } finally {
+        setIsChangingMethod(false);
+        setShowMethodPicker(false);
+      }
+    },
+    [notebook]
+  );
+
+  // Close method picker on outside click
+  useEffect(() => {
+    if (!showMethodPicker) return;
+    const handleOutsideClick = (e: MouseEvent) => {
+      if (methodPickerRef.current && !methodPickerRef.current.contains(e.target as Node)) {
+        setShowMethodPicker(false);
+      }
+    };
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => document.removeEventListener('mousedown', handleOutsideClick);
+  }, [showMethodPicker]);
+
   // Loading state
   if (isLoading) {
     return (
@@ -328,6 +364,35 @@ const Notebooks: React.FC = () => {
               {notebook.title}
             </h1>
           )}
+          {(() => {
+            const m = METHODS.find((m) => m.id === notebook.defaultMethod);
+            return (
+              <div className="header-method-wrapper" ref={methodPickerRef}>
+                <button
+                  className="header-method-badge"
+                  onClick={() => setShowMethodPicker((v) => !v)}
+                  title="Change default method"
+                  disabled={isChangingMethod}
+                >
+                  {m?.icon} {m?.name}
+                  <span className="method-badge-caret">▾</span>
+                </button>
+                {showMethodPicker && (
+                  <div className="header-method-dropdown">
+                    {METHODS.map((opt) => (
+                      <button
+                        key={opt.id}
+                        className={`method-dropdown-item${opt.id === notebook.defaultMethod ? ' active' : ''}`}
+                        onClick={() => handleChangeMethod(opt.id)}
+                      >
+                        {opt.icon} {opt.name}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
         </div>
         <div className="header-right">
           <span className="last-edited">Edited {formatRelativeTime(notebook.updatedAt)}</span>

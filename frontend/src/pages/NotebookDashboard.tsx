@@ -265,6 +265,7 @@ const NotebookDashboard: React.FC = () => {
                   title={notebook.title}
                   content={notebook.content}
                   updatedAt={notebook.updatedAt}
+                  defaultMethod={notebook.defaultMethod}
                   onClick={() => handleOpenNotebook(notebook.id)}
                   onDelete={() => handleDeleteNotebook(notebook.id, notebook.title)}
                   onRename={(newTitle) => handleRenameNotebook(notebook.id, newTitle)}
@@ -305,6 +306,7 @@ const NotebookDashboard: React.FC = () => {
                     title={notebook.title}
                     content={notebook.content}
                     updatedAt={notebook.updatedAt}
+                    defaultMethod={notebook.defaultMethod}
                     onClick={() => handleOpenNotebook(notebook.id)}
                     onDelete={() => handleDeleteNotebook(notebook.id, notebook.title)}
                     onRename={(newTitle) => handleRenameNotebook(notebook.id, newTitle)}

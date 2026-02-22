@@ -1,12 +1,15 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { formatCardDate } from '../utils/formatDate';
 import { getPreviewText, getColorFromString } from '../utils/format';
+import { METHODS } from '../constants/noteMethods';
+import type { NotebookMethod } from '../types';
 
 interface NotebookCardProps {
   id: string;
   title: string;
   content: string;
   updatedAt: string;
+  defaultMethod: NotebookMethod;
   sourcesCount?: number;
   onClick: () => void;
   onDelete: () => void;
@@ -17,6 +20,7 @@ const NotebookCard: React.FC<NotebookCardProps> = ({
   title,
   content,
   updatedAt,
+  defaultMethod,
   sourcesCount = 0,
   onClick,
   onDelete,
@@ -121,6 +125,14 @@ const NotebookCard: React.FC<NotebookCardProps> = ({
         <p className="notebook-card-preview">{getPreviewText(content)}</p>
       </div>
       <div className="notebook-card-footer">
+        {(() => {
+          const method = METHODS.find((m) => m.id === defaultMethod);
+          return method ? (
+            <span className="notebook-method-badge">
+              {method.icon} {method.name}
+            </span>
+          ) : null;
+        })()}
         <span className="notebook-card-date">{formatCardDate(updatedAt)}</span>
         {sourcesCount > 0 && (
           <span className="notebook-card-sources">

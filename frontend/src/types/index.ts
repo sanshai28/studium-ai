@@ -30,6 +30,7 @@ export interface CreateNotebookData {
 export interface UpdateNotebookData {
   title?: string;
   content?: string;
+  defaultMethod?: NotebookMethod;
 }
 
 // Note types
