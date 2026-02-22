@@ -64,7 +64,7 @@ export const createNotebook = async (req: AuthRequest, res: Response): Promise<v
 export const updateNotebook = async (req: AuthRequest, res: Response): Promise<void> => {
   const userId = req.userId!;
   const id = req.params.id as string;
-  const { title, content } = req.body;
+  const { title, content, defaultMethod } = req.body;
 
   const notebook = await prisma.notebook.findUnique({
     where: { id },
@@ -83,6 +83,7 @@ export const updateNotebook = async (req: AuthRequest, res: Response): Promise<v
     data: {
       ...(title !== undefined && { title }),
       ...(content !== undefined && { content }),
+      ...(defaultMethod !== undefined && { defaultMethod }),
     },
   });
 
