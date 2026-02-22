@@ -2,8 +2,9 @@ import { Response } from 'express';
 import prisma from '../utils/prisma';
 import { AuthRequest } from '../types';
 import { NotFoundError, ForbiddenError } from '../middleware/errorHandler';
+import { METHOD_TEMPLATES } from '../constants/noteTemplates';
 
-const verifyNotebookOwnership = async (notebookId: string, userId: string): Promise<void> => {
+const verifyNotebookOwnership = async (notebookId: string, userId: string) => {
   const notebook = await prisma.notebook.findUnique({
     where: { id: notebookId },
   });
@@ -15,6 +16,8 @@ const verifyNotebookOwnership = async (notebookId: string, userId: string): Prom
   if (notebook.userId !== userId) {
     throw new ForbiddenError();
   }
+
+  return notebook;
 };
 
 export const getNotes = async (req: AuthRequest, res: Response): Promise<void> => {
@@ -35,9 +38,10 @@ export const createNote = async (req: AuthRequest, res: Response): Promise<void>
   const userId = req.userId!;
   const notebookId = req.params.notebookId as string;
 
-  await verifyNotebookOwnership(notebookId, userId);
+  const notebook = await verifyNotebookOwnership(notebookId, userId);
 
-  const { title = 'Untitled Note', content = '' } = req.body;
+  const templateContent = METHOD_TEMPLATES[notebook.defaultMethod] ?? '<p></p>';
+  const { title = 'Untitled Note', content = templateContent } = req.body;
 
   const maxOrder = await prisma.note.aggregate({
     where: { notebookId },

@@ -44,7 +44,7 @@ export const notebooksAPI = {
     return response.data;
   },
 
-  create: async (notebook: { title: string; content: string }) => {
+  create: async (notebook: { title: string; content: string; defaultMethod: string }) => {
     const response = await api.post('/notebooks', notebook);
     return response.data;
   },

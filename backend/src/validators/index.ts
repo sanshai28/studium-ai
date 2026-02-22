@@ -29,11 +29,15 @@ export const passwordResetSchema = z.object({
   }),
 });
 
+// Notebook method schema
+export const notebookMethodSchema = z.enum(['cornell', 'sentence', 'outlining', 'charting', 'blank']);
+
 // Notebook validation schemas
 export const createNotebookSchema = z.object({
   body: z.object({
     title: z.string().min(1, 'Title is required').max(255, 'Title too long'),
     content: z.string().default(''),
+    defaultMethod: notebookMethodSchema.default('blank'),
   }),
 });
 

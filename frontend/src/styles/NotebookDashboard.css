@@ -949,4 +949,107 @@
     width: 56px;
     height: 56px;
   }
+
+  .method-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .modal-wide {
+    max-width: 100%;
+  }
+}
+
+/* Wide modal for template selection */
+.modal-wide {
+  max-width: 600px;
+}
+
+/* Template method selection */
+.method-subtitle {
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+  margin: 0 0 var(--space-5);
+  text-align: center;
+}
+
+.method-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-3);
+}
+
+.method-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-4) var(--space-3);
+  border-radius: var(--radius-xl);
+  border: 2px solid var(--color-border);
+  background: var(--color-background-secondary);
+  cursor: pointer;
+  text-align: center;
+  transition: all var(--duration-normal) var(--ease-out);
+  font-family: inherit;
+}
+
+.method-card:hover {
+  border-color: var(--color-info);
+  background: var(--color-surface);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.method-card.selected {
+  border-color: var(--color-info);
+  background: var(--color-surface);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+.method-icon {
+  font-size: 1.75rem;
+}
+
+.method-name {
+  font-size: 0.875rem;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.method-desc {
+  font-size: 0.75rem;
+  color: var(--color-text-secondary);
+  line-height: 1.4;
+}
+
+/* Selected method badge shown on step 2 */
+.selected-method-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-full);
+  background: var(--color-info);
+  color: white;
+  font-size: 0.875rem;
+  font-weight: var(--font-weight-medium);
+  margin-bottom: var(--space-4);
+}
+
+/* Back button in modal footer */
+.btn-back {
+  padding: var(--space-3) var(--space-4);
+  background: none;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  font-size: 0.9375rem;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all var(--duration-normal);
+  margin-right: auto;
+  font-family: inherit;
+}
+
+.btn-back:hover {
+  background: var(--color-hover);
 }
