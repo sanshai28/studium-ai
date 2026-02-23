@@ -731,10 +731,157 @@
   }
 }
 
+/* Notebook Editor View */
+.notebook-editor-view {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100%;
+  overflow: hidden;
+}
+
+/* Editor Header - Compact Top Bar */
+.editor-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-2) var(--space-4);
+  border-bottom: 1px solid var(--color-border-light);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-xs);
+  flex-shrink: 0;
+  gap: var(--space-4);
+  min-height: 48px;
+}
+
+.editor-header .header-left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-shrink: 0;
+}
+
+.editor-header .header-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+}
+
+.editor-header .header-right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-shrink: 0;
+}
+
+.editor-header .header-title {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  cursor: pointer;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  transition: background var(--duration-normal) var(--ease-out);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 300px;
+}
+
+.editor-header .header-title:hover {
+  background: var(--color-hover);
+}
+
+.editor-header .header-title-input {
+  font-size: 1.125rem;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  border: none;
+  border-bottom: 2px solid var(--color-primary);
+  padding: var(--space-1) var(--space-2);
+  outline: none;
+  background: transparent;
+  font-family: inherit;
+  max-width: 300px;
+}
+
+.editor-header .header-branding {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.editor-header .branding-icon {
+  font-size: 1.25rem;
+}
+
+.editor-header .branding-text {
+  font-size: 1rem;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.editor-header .btn-back {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  font-size: 1rem;
+  transition: all var(--duration-normal) var(--ease-out);
+}
+
+.editor-header .btn-back:hover {
+  background: var(--color-hover);
+  color: var(--color-text-primary);
+}
+
+.editor-header .btn-delete-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  cursor: pointer;
+  font-size: 0.875rem;
+  transition: all var(--duration-normal) var(--ease-out);
+}
+
+.editor-header .btn-delete-header:hover {
+  background: var(--color-error-light);
+  border-color: var(--color-error);
+}
+
+.editor-header .user-avatar-small {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-full);
+  background: var(--gradient-primary);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: var(--font-weight-semibold);
+}
+
 /* Three Pane Layout */
 .notebook-main.three-pane {
   display: flex;
   flex-direction: column;
+  flex: 1;
+  overflow: hidden;
 }
 
 /* Premium Notebook Header */
@@ -840,24 +987,49 @@
 }
 
 .sources-pane {
-  width: 300px;
-  min-width: 250px;
+  width: 220px;
+  min-width: 100px;
   flex-shrink: 0;
   background: var(--glass-bg-strong);
 }
 
 .qa-pane {
   flex: 1;
-  min-width: 300px;
+  min-width: 200px;
   background: linear-gradient(180deg, var(--color-surface) 0%, var(--color-background) 100%);
 }
 
 .notes-pane {
-  width: 400px;
-  min-width: 300px;
+  width: 350px;
+  min-width: 100px;
   flex-shrink: 0;
   border-right: none;
   background: var(--glass-bg-strong);
+}
+
+/* Pane Resize Handle */
+.pane-resize-handle {
+  width: 4px;
+  cursor: col-resize;
+  background: transparent;
+  position: relative;
+  flex-shrink: 0;
+  z-index: 10;
+  transition: background var(--duration-fast) var(--ease-out);
+}
+
+.pane-resize-handle:hover,
+.pane-resize-handle.dragging {
+  background: var(--color-primary-light);
+}
+
+.pane-resize-handle::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -3px;
+  right: -3px;
 }
 
 /* Premium Pane Header */
@@ -1222,8 +1394,8 @@
 
 /* Notes sidebar */
 .notes-sidebar {
-  width: 170px;
-  min-width: 140px;
+  width: 140px;
+  min-width: 110px;
   border-right: 1px solid var(--color-border-light);
   overflow-y: auto;
   background: rgba(255, 255, 255, 0.4);
@@ -1949,13 +2121,13 @@
 /* Responsive for Three Pane */
 @media (max-width: 1200px) {
   .sources-pane {
-    width: 250px;
-    min-width: 200px;
+    width: 180px;
+    min-width: 140px;
   }
 
   .notes-pane {
-    width: 300px;
-    min-width: 250px;
+    width: 260px;
+    min-width: 200px;
   }
 }
 

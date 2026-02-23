@@ -8,9 +8,10 @@ interface SourcesPaneProps {
   notebookId: string;
   sources: Source[];
   onSourcesChange: () => void;
+  style?: React.CSSProperties;
 }
 
-const SourcesPane: React.FC<SourcesPaneProps> = ({ notebookId, sources, onSourcesChange }) => {
+const SourcesPane: React.FC<SourcesPaneProps> = ({ notebookId, sources, onSourcesChange, style }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -71,7 +72,7 @@ const SourcesPane: React.FC<SourcesPaneProps> = ({ notebookId, sources, onSource
   };
 
   return (
-    <div className="sources-pane">
+    <div className="sources-pane" style={style}>
       <div className="pane-header">
         <h3>Sources</h3>
       </div>

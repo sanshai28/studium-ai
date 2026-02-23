@@ -15,6 +15,7 @@ interface NotesPaneProps {
   onSave: () => void;
   isSaving: boolean;
   lastSaved: Date | null;
+  style?: React.CSSProperties;
 }
 
 const NotesPane: React.FC<NotesPaneProps> = ({
@@ -29,6 +30,7 @@ const NotesPane: React.FC<NotesPaneProps> = ({
   onSave,
   isSaving,
   lastSaved,
+  style,
 }) => {
   const activeNote = notes.find((n) => n.id === activeNoteId) ?? null;
   const [renamingNoteId, setRenamingNoteId] = useState<string | null>(null);
@@ -133,7 +135,7 @@ const NotesPane: React.FC<NotesPaneProps> = ({
   const sortedNotes = [...notes].sort((a, b) => a.order - b.order);
 
   return (
-    <div className="notes-pane">
+    <div className="notes-pane" style={style}>
       <div className="pane-header">
         <h3>Notes</h3>
         <div className="notes-header-actions">
