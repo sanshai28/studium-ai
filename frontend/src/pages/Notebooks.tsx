@@ -33,6 +33,55 @@ const Notebooks: React.FC = () => {
   const [isChangingMethod, setIsChangingMethod] = useState(false);
   const methodPickerRef = useRef<HTMLDivElement>(null);
 
+  // Pane resize state
+  const [sourcesWidth, setSourcesWidth] = useState(220);
+  const [notesWidth, setNotesWidth] = useState(350);
+  const draggingRef = useRef<'sources' | 'notes' | null>(null);
+  const startXRef = useRef(0);
+  const startWidthRef = useRef(0);
+  const panesContainerRef = useRef<HTMLDivElement>(null);
+
+  const handleResizeMouseDown = useCallback((pane: 'sources' | 'notes', e: React.MouseEvent) => {
+    e.preventDefault();
+    draggingRef.current = pane;
+    startXRef.current = e.clientX;
+    startWidthRef.current = pane === 'sources' ? sourcesWidth : notesWidth;
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+  }, [sourcesWidth, notesWidth]);
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!draggingRef.current) return;
+      const delta = e.clientX - startXRef.current;
+      const viewportWidth = window.innerWidth;
+      const maxPaneWidth = Math.floor(viewportWidth * 0.6);
+      if (draggingRef.current === 'sources') {
+        const newWidth = Math.max(100, Math.min(maxPaneWidth, startWidthRef.current + delta));
+        setSourcesWidth(newWidth);
+      } else {
+        // Notes pane: dragging right edge leftward increases width
+        const newWidth = Math.max(100, Math.min(maxPaneWidth, startWidthRef.current - delta));
+        setNotesWidth(newWidth);
+      }
+    };
+
+    const handleMouseUp = () => {
+      if (draggingRef.current) {
+        draggingRef.current = null;
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+      }
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, []);
+
   // Load notebook data on mount or notebookId change
   useEffect(() => {
     if (notebookId) {
@@ -416,11 +465,17 @@ const Notebooks: React.FC = () => {
           </div>
         )}
 
-        <div className="panes-container">
+        <div className="panes-container" ref={panesContainerRef}>
           <SourcesPane
             notebookId={notebook.id}
             sources={sources}
             onSourcesChange={handleSourcesChange}
+            style={{ width: sourcesWidth }}
+          />
+
+          <div
+            className={`pane-resize-handle${draggingRef.current === 'sources' ? ' dragging' : ''}`}
+            onMouseDown={(e) => handleResizeMouseDown('sources', e)}
           />
 
           <QAPane
@@ -429,6 +484,11 @@ const Notebooks: React.FC = () => {
             onMessagesChange={handleMessagesChange}
             onAddToNotes={handleAddToNotes}
             hasNoSources={sources.length === 0}
+          />
+
+          <div
+            className={`pane-resize-handle${draggingRef.current === 'notes' ? ' dragging' : ''}`}
+            onMouseDown={(e) => handleResizeMouseDown('notes', e)}
           />
 
           <NotesPane
@@ -443,6 +503,7 @@ const Notebooks: React.FC = () => {
             onSave={handleSaveNote}
             isSaving={isSaving}
             lastSaved={lastSaved}
+            style={{ width: notesWidth }}
           />
         </div>
       </div>
