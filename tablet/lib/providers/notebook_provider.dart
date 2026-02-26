@@ -41,15 +41,45 @@ class NotebooksNotifier
     return service.getAll();
   }
 
-  /// Creates a notebook with [title] and
-  /// refreshes the list.
-  Future<Notebook> create(String title) async {
+  /// Creates a notebook with [title] and optional
+  /// [defaultMethod], then refreshes the list.
+  Future<Notebook> create(
+    String title, {
+    String defaultMethod = 'blank',
+  }) async {
     final service =
         ref.read(notebookServiceProvider);
-    final notebook =
-        await service.create(title);
+    final notebook = await service.create(
+      title,
+      defaultMethod: defaultMethod,
+    );
     ref.invalidateSelf();
     return notebook;
+  }
+
+  /// Renames a notebook by [id].
+  Future<void> rename(
+    String id,
+    String newTitle,
+  ) async {
+    final service =
+        ref.read(notebookServiceProvider);
+    await service.update(id, title: newTitle);
+    ref.invalidateSelf();
+  }
+
+  /// Changes the default method of a notebook.
+  Future<void> updateMethod(
+    String id,
+    String method,
+  ) async {
+    final service =
+        ref.read(notebookServiceProvider);
+    await service.update(
+      id,
+      defaultMethod: method,
+    );
+    ref.invalidateSelf();
   }
 
   /// Deletes a notebook by [id] and refreshes

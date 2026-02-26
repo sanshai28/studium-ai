@@ -1,45 +1,44 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:studium_tablet/providers/notes_provider.dart';
+import 'package:studium_tablet/providers/note_provider.dart';
 
 void main() {
-  group('NotesState', () {
+  group('NotesListState', () {
     test('default values', () {
-      const state = NotesState();
-      expect(state.content, '');
+      const state = NotesListState();
+      expect(state.notes, isEmpty);
+      expect(state.isLoading, false);
       expect(state.isSaving, false);
       expect(state.lastSaved, isNull);
-    });
-
-    test('copyWith updates content', () {
-      const state = NotesState();
-      final updated = state.copyWith(content: 'Hello');
-      expect(updated.content, 'Hello');
-      expect(updated.isSaving, false);
+      expect(state.error, isNull);
     });
 
     test('copyWith updates isSaving', () {
-      const state = NotesState();
+      const state = NotesListState();
       final updated = state.copyWith(isSaving: true);
       expect(updated.isSaving, true);
-      expect(updated.content, '');
+      expect(updated.notes, isEmpty);
     });
 
     test('copyWith updates lastSaved', () {
-      const state = NotesState();
+      const state = NotesListState();
       final now = DateTime.now();
       final updated = state.copyWith(lastSaved: now);
       expect(updated.lastSaved, now);
     });
 
+    test('copyWith updates isLoading', () {
+      const state = NotesListState();
+      final updated = state.copyWith(isLoading: true);
+      expect(updated.isLoading, true);
+    });
+
     test('copyWith preserves unmodified fields', () {
-      final state = NotesState(
-        content: 'Existing',
+      final state = NotesListState(
         isSaving: true,
         lastSaved: DateTime(2025, 1, 1),
       );
-      final updated = state.copyWith(content: 'New');
-      expect(updated.content, 'New');
-      expect(updated.isSaving, true);
+      final updated = state.copyWith(isSaving: false);
+      expect(updated.isSaving, false);
       expect(updated.lastSaved, DateTime(2025, 1, 1));
     });
   });

@@ -1,16 +1,19 @@
-/// A user's notebook with notes and sources.
-class Notebook {
+/// A single note within a notebook.
+class Note {
   /// Unique identifier.
   final String id;
 
   /// Display title.
   final String title;
 
-  /// Markdown/text content (legacy notes).
+  /// Note content (plain text or HTML).
   final String content;
 
-  /// Default note-taking method for this notebook.
-  final String defaultMethod;
+  /// Sort order within the notebook.
+  final int order;
+
+  /// Parent notebook ID.
+  final String notebookId;
 
   /// Timestamp when created.
   final DateTime createdAt;
@@ -18,31 +21,31 @@ class Notebook {
   /// Timestamp of the most recent update.
   final DateTime updatedAt;
 
-  /// Creates a [Notebook].
-  const Notebook({
+  /// Creates a [Note].
+  const Note({
     required this.id,
     required this.title,
     required this.content,
-    required this.defaultMethod,
+    required this.order,
+    required this.notebookId,
     required this.createdAt,
     required this.updatedAt,
   });
 
   /// Deserializes from JSON.
-  ///
-  /// Defaults [content] to empty if null.
-  /// Defaults [defaultMethod] to 'blank' if null.
-  factory Notebook.fromJson(
+  factory Note.fromJson(
     Map<String, dynamic> json,
   ) {
-    return Notebook(
+    return Note(
       id: json['id'] as String,
-      title: json['title'] as String,
+      title:
+          (json['title'] as String?) ??
+              'Untitled Note',
       content:
           (json['content'] as String?) ?? '',
-      defaultMethod:
-          (json['defaultMethod'] as String?) ??
-              'blank',
+      order: (json['order'] as num?)?.toInt() ?? 0,
+      notebookId:
+          json['notebookId'] as String,
       createdAt: DateTime.parse(
         json['createdAt'] as String,
       ),
@@ -53,17 +56,17 @@ class Notebook {
   }
 
   /// Returns a copy with updated fields.
-  Notebook copyWith({
+  Note copyWith({
     String? title,
     String? content,
-    String? defaultMethod,
+    int? order,
   }) {
-    return Notebook(
+    return Note(
       id: id,
       title: title ?? this.title,
       content: content ?? this.content,
-      defaultMethod:
-          defaultMethod ?? this.defaultMethod,
+      order: order ?? this.order,
+      notebookId: notebookId,
       createdAt: createdAt,
       updatedAt: DateTime.now(),
     );
