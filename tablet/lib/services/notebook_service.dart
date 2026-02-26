@@ -33,13 +33,18 @@ class NotebookService {
     );
   }
 
-  /// Creates a new notebook with [title].
-  Future<Notebook> create(String title) async {
+  /// Creates a new notebook with [title] and
+  /// optional [defaultMethod].
+  Future<Notebook> create(
+    String title, {
+    String defaultMethod = 'blank',
+  }) async {
     final response = await _dio.post(
       '/notebooks',
       data: {
         'title': title,
         'content': '',
+        'defaultMethod': defaultMethod,
       },
     );
     return Notebook.fromJson(
@@ -53,13 +58,19 @@ class NotebookService {
     String id, {
     String? title,
     String? content,
+    String? defaultMethod,
   }) async {
+    final data = <String, dynamic>{};
+    if (title != null) data['title'] = title;
+    if (content != null) {
+      data['content'] = content;
+    }
+    if (defaultMethod != null) {
+      data['defaultMethod'] = defaultMethod;
+    }
     final response = await _dio.put(
       '/notebooks/$id',
-      data: {
-        'title': title,
-        'content': content,
-      },
+      data: data,
     );
     return Notebook.fromJson(
       response.data['notebook']

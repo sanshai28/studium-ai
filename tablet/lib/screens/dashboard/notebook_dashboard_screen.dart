@@ -28,17 +28,21 @@ class _NotebookDashboardScreenState
   String _searchQuery = '';
 
   Future<void> _createNotebook() async {
-    final title = await showDialog<String>(
+    final result =
+        await showDialog<CreateNotebookResult>(
       context: context,
       builder: (context) =>
           const CreateNotebookDialog(),
     );
-    if (title == null) return;
+    if (result == null) return;
 
     try {
       final notebook = await ref
           .read(notebooksProvider.notifier)
-          .create(title);
+          .create(
+            result.title,
+            defaultMethod: result.defaultMethod,
+          );
       if (mounted) {
         context.push(
           AppRoutes.notebookEditor(
@@ -53,6 +57,76 @@ class _NotebookDashboardScreenState
           SnackBar(
             content: Text(
               'Failed to create notebook: $e',
+            ),
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _renameNotebook(
+    String id,
+    String currentTitle,
+  ) async {
+    final controller = TextEditingController(
+      text: currentTitle,
+    );
+    final newTitle = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Rename notebook'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          decoration: const InputDecoration(
+            labelText: 'Title',
+          ),
+          onSubmitted: (v) =>
+              Navigator.pop(context, v.trim()),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () =>
+                Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(
+              context,
+              controller.text.trim(),
+            ),
+            child: const Text('Rename'),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+
+    if (newTitle == null ||
+        newTitle.isEmpty ||
+        newTitle == currentTitle) {
+      return;
+    }
+
+    try {
+      await ref
+          .read(notebooksProvider.notifier)
+          .rename(id, newTitle);
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(
+          const SnackBar(
+            content: Text('Notebook renamed'),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(
+          SnackBar(
+            content: Text(
+              'Failed to rename: $e',
             ),
           ),
         );
@@ -209,6 +283,7 @@ class _NotebookDashboardScreenState
               AppRoutes.notebookEditor(id),
             ),
             onDelete: _deleteNotebook,
+            onRename: _renameNotebook,
           );
         },
       ),
@@ -378,12 +453,15 @@ class _NotebooksGrid extends StatelessWidget {
     required this.notebooks,
     required this.onTap,
     required this.onDelete,
+    required this.onRename,
   });
 
   final List<dynamic> notebooks;
   final void Function(String id) onTap;
   final void Function(String id, String title)
       onDelete;
+  final void Function(String id, String title)
+      onRename;
 
   @override
   Widget build(BuildContext context) {
@@ -407,6 +485,10 @@ class _NotebooksGrid extends StatelessWidget {
               notebook: notebook,
               onTap: () => onTap(notebook.id),
               onDelete: () => onDelete(
+                notebook.id,
+                notebook.title,
+              ),
+              onRename: () => onRename(
                 notebook.id,
                 notebook.title,
               ),

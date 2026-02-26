@@ -3,8 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../config/routes.dart';
+import '../../constants/note_methods.dart';
+import '../../providers/note_provider.dart';
 import '../../providers/notebook_provider.dart';
-import '../../providers/notes_provider.dart';
 import '../../providers/source_provider.dart';
 import '../../theme/colors.dart';
 import '../../widgets/notebook/notes_pane.dart';
@@ -33,7 +34,6 @@ class NotebookEditorScreen
 class _NotebookEditorScreenState
     extends ConsumerState<
         NotebookEditorScreen> {
-  bool _notesInitialized = false;
   int _selectedPaneIndex = 0;
 
   @override
@@ -44,18 +44,6 @@ class _NotebookEditorScreenState
     final sourcesAsync = ref.watch(
       sourcesProvider(widget.notebookId),
     );
-
-    if (!_notesInitialized) {
-      notebookAsync.whenData((notebook) {
-        ref
-            .read(
-              notesProvider(widget.notebookId)
-                  .notifier,
-            )
-            .setInitialContent(notebook.content);
-        _notesInitialized = true;
-      });
-    }
 
     final hasSources = sourcesAsync.whenOrNull(
           data: (s) => s.isNotEmpty,
@@ -83,12 +71,34 @@ class _NotebookEditorScreenState
           ),
         ),
         actions: [
+          // Method badge
+          notebookAsync.whenOrNull(
+                data: (notebook) =>
+                    _MethodBadge(
+                  notebookId: widget.notebookId,
+                  currentMethod:
+                      notebook.defaultMethod,
+                ),
+              ) ??
+              const SizedBox.shrink(),
+          const SizedBox(width: 8),
           IconButton(
             icon: const Icon(
               Icons.edit_outlined,
             ),
             tooltip: 'Rename notebook',
             onPressed: () => _renameNotebook(
+              notebookAsync.valueOrNull?.title,
+            ),
+          ),
+          IconButton(
+            icon: const Icon(
+              Icons.delete_outline,
+              color: AppColors.error,
+            ),
+            tooltip: 'Delete notebook',
+            onPressed: () =>
+                _deleteNotebook(
               notebookAsync.valueOrNull?.title,
             ),
           ),
@@ -197,6 +207,184 @@ class _NotebookEditorScreenState
       }
     }
   }
+
+  Future<void> _deleteNotebook(
+    String? title,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete notebook'),
+        content: Text(
+          'Are you sure you want to delete '
+          '"${title ?? 'this notebook'}"? '
+          'This cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () =>
+                Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () =>
+                Navigator.pop(context, true),
+            style: TextButton.styleFrom(
+              foregroundColor: AppColors.error,
+            ),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+
+    try {
+      await ref
+          .read(notebooksProvider.notifier)
+          .delete(widget.notebookId);
+      if (mounted) {
+        context.go(AppRoutes.notebooks);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(
+          SnackBar(
+            content: Text(
+              'Failed to delete: $e',
+            ),
+          ),
+        );
+      }
+    }
+  }
+}
+
+/// Method badge button with dropdown picker.
+class _MethodBadge extends ConsumerWidget {
+  const _MethodBadge({
+    required this.notebookId,
+    required this.currentMethod,
+  });
+
+  final String notebookId;
+  final String currentMethod;
+
+  @override
+  Widget build(
+    BuildContext context,
+    WidgetRef ref,
+  ) {
+    final method = noteMethodById(currentMethod);
+    return PopupMenuButton<String>(
+      onSelected: (newMethod) async {
+        if (newMethod == currentMethod) return;
+        try {
+          await ref
+              .read(notebooksProvider.notifier)
+              .updateMethod(
+                notebookId,
+                newMethod,
+              );
+          ref.invalidate(
+            notebookProvider(notebookId),
+          );
+        } catch (e) {
+          if (context.mounted) {
+            ScaffoldMessenger.of(context)
+                .showSnackBar(
+              SnackBar(
+                content: Text(
+                  'Failed to change method: $e',
+                ),
+              ),
+            );
+          }
+        }
+      },
+      itemBuilder: (context) => noteMethods
+          .map(
+            (m) => PopupMenuItem<String>(
+              value: m.id,
+              child: Row(
+                children: [
+                  Icon(
+                    m.icon,
+                    size: 20,
+                    color:
+                        m.id == currentMethod
+                            ? AppColors.primary
+                            : AppColors
+                                .textSecondary,
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    m.name,
+                    style: TextStyle(
+                      fontWeight:
+                          m.id == currentMethod
+                              ? FontWeight.w600
+                              : FontWeight.w400,
+                      color:
+                          m.id == currentMethod
+                              ? AppColors.primary
+                              : AppColors
+                                  .textPrimary,
+                    ),
+                  ),
+                  if (m.id == currentMethod) ...[
+                    const Spacer(),
+                    const Icon(
+                      Icons.check,
+                      size: 18,
+                      color: AppColors.primary,
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          )
+          .toList(),
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: 10,
+          vertical: 4,
+        ),
+        decoration: BoxDecoration(
+          color: AppColors.primary
+              .withValues(alpha: 0.1),
+          borderRadius:
+              BorderRadius.circular(8),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              method.icon,
+              size: 16,
+              color: AppColors.primary,
+            ),
+            const SizedBox(width: 4),
+            Text(
+              method.name,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: AppColors.primary,
+              ),
+            ),
+            const SizedBox(width: 4),
+            const Icon(
+              Icons.arrow_drop_down,
+              size: 18,
+              color: AppColors.primary,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class _EditorError extends StatelessWidget {
@@ -282,8 +470,9 @@ class _LandscapeLayout
               onAddToNotes: (content) {
                 ref
                     .read(
-                      notesProvider(notebookId)
-                          .notifier,
+                      notesListProvider(
+                        notebookId,
+                      ).notifier,
                     )
                     .addToNotes(content);
               },
@@ -369,7 +558,7 @@ class _PortraitLayout
                 onAddToNotes: (content) {
                   ref
                       .read(
-                        notesProvider(
+                        notesListProvider(
                           notebookId,
                         ).notifier,
                       )

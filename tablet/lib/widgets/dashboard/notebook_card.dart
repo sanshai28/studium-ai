@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../../constants/note_methods.dart';
 import '../../models/notebook.dart';
 import '../../theme/colors.dart';
 
@@ -15,12 +16,16 @@ class NotebookCard extends StatelessWidget {
   /// Called when the user chooses to delete.
   final VoidCallback onDelete;
 
+  /// Called when the user chooses to rename.
+  final VoidCallback onRename;
+
   /// Creates a [NotebookCard].
   const NotebookCard({
     super.key,
     required this.notebook,
     required this.onTap,
     required this.onDelete,
+    required this.onRename,
   });
 
   String _formatDate(DateTime date) {
@@ -50,6 +55,9 @@ class NotebookCard extends StatelessWidget {
         : content.length > 120
             ? '${content.substring(0, 120)}...'
             : content;
+    final method = noteMethodById(
+      notebook.defaultMethod,
+    );
 
     return Card(
       clipBehavior: Clip.antiAlias,
@@ -71,6 +79,7 @@ class NotebookCard extends StatelessWidget {
                     _TitleRow(
                       title: notebook.title,
                       onDelete: onDelete,
+                      onRename: onRename,
                     ),
                     const SizedBox(height: 8),
                     Expanded(
@@ -88,15 +97,23 @@ class NotebookCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    Text(
-                      _formatDate(
-                        notebook.updatedAt,
-                      ),
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color:
-                            AppColors.textTertiary,
-                      ),
+                    Row(
+                      children: [
+                        _MethodBadge(
+                          method: method,
+                        ),
+                        const Spacer(),
+                        Text(
+                          _formatDate(
+                            notebook.updatedAt,
+                          ),
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: AppColors
+                                .textTertiary,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -109,14 +126,56 @@ class NotebookCard extends StatelessWidget {
   }
 }
 
+class _MethodBadge extends StatelessWidget {
+  const _MethodBadge({required this.method});
+
+  final NoteMethod method;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 8,
+        vertical: 3,
+      ),
+      decoration: BoxDecoration(
+        color: AppColors.primary
+            .withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            method.icon,
+            size: 14,
+            color: AppColors.primary,
+          ),
+          const SizedBox(width: 4),
+          Text(
+            method.name,
+            style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: AppColors.primary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _TitleRow extends StatelessWidget {
   const _TitleRow({
     required this.title,
     required this.onDelete,
+    required this.onRename,
   });
 
   final String title;
   final VoidCallback onDelete;
+  final VoidCallback onRename;
 
   @override
   Widget build(BuildContext context) {
@@ -136,9 +195,25 @@ class _TitleRow extends StatelessWidget {
         ),
         PopupMenuButton<String>(
           onSelected: (value) {
+            if (value == 'rename') onRename();
             if (value == 'delete') onDelete();
           },
           itemBuilder: (context) => [
+            const PopupMenuItem(
+              value: 'rename',
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.edit_outlined,
+                    size: 20,
+                    color:
+                        AppColors.textSecondary,
+                  ),
+                  SizedBox(width: 8),
+                  Text('Rename'),
+                ],
+              ),
+            ),
             const PopupMenuItem(
               value: 'delete',
               child: Row(
