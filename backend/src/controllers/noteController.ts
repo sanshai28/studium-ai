@@ -50,7 +50,7 @@ export const createNote = async (req: AuthRequest, res: Response): Promise<void>
   const newOrder = (maxOrder._max.order ?? -1) + 1;
 
   const note = await prisma.note.create({
-    data: { title, content, order: newOrder, notebookId },
+    data: { title, content, method: notebook.defaultMethod, order: newOrder, notebookId },
   });
 
   res.status(201).json({ note });

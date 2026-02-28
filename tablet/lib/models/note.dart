@@ -9,6 +9,9 @@ class Note {
   /// Note content (plain text or HTML).
   final String content;
 
+  /// The note-taking method (inherited from notebook on creation).
+  final String method;
+
   /// Sort order within the notebook.
   final int order;
 
@@ -26,6 +29,7 @@ class Note {
     required this.id,
     required this.title,
     required this.content,
+    required this.method,
     required this.order,
     required this.notebookId,
     required this.createdAt,
@@ -43,6 +47,8 @@ class Note {
               'Untitled Note',
       content:
           (json['content'] as String?) ?? '',
+      method:
+          (json['method'] as String?) ?? 'blank',
       order: (json['order'] as num?)?.toInt() ?? 0,
       notebookId:
           json['notebookId'] as String,
@@ -65,6 +71,7 @@ class Note {
       id: id,
       title: title ?? this.title,
       content: content ?? this.content,
+      method: method,
       order: order ?? this.order,
       notebookId: notebookId,
       createdAt: createdAt,
