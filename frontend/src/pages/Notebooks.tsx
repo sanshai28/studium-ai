@@ -332,6 +332,7 @@ const Notebooks: React.FC = () => {
         setNotebook(data.notebook);
       } catch (err) {
         console.error('Change method error:', err);
+        setError('Failed to change default method');
       } finally {
         setIsChangingMethod(false);
         setShowMethodPicker(false);
@@ -437,6 +438,9 @@ const Notebooks: React.FC = () => {
                         {opt.icon} {opt.name}
                       </button>
                     ))}
+                    <div className="method-dropdown-hint">
+                      Only new notes will use the selected method. Your {notes.length} existing {notes.length === 1 ? 'note' : 'notes'} won't change.
+                    </div>
                   </div>
                 )}
               </div>
