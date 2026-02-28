@@ -1,13 +1,13 @@
 import { NotebookMethod } from '@prisma/client';
 
 /**
- * Initial HTML content applied to a new note based on the notebook's defaultMethod.
- * All values must be valid HTML renderable by TipTap's StarterKit extensions
- * (headings, ordered/unordered lists, paragraphs).
+ * Initial content applied to a new note based on the notebook's defaultMethod.
+ * Most methods use plain HTML renderable by TipTap's StarterKit extensions.
+ * Cornell uses a JSON string with three sections (cues, notes, summary).
  */
 export const METHOD_TEMPLATES: Record<NotebookMethod, string> = {
   cornell:
-    '<h2>Cues / Questions</h2><p></p><h2>Notes</h2><p></p><h2>Summary</h2><p></p>',
+    JSON.stringify({ cues: '<p></p>', notes: '<p></p>', summary: '<p></p>' }),
   sentence:
     '<ol><li></li></ol>',
   outlining:

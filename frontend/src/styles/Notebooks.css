@@ -1836,6 +1836,97 @@
   filter: brightness(1.1);
 }
 
+/* ===== Cornell Method Editor ===== */
+.cornell-editor {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.cornell-top {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  border-bottom: 2px solid var(--color-border);
+}
+
+.cornell-section {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  transition: box-shadow var(--duration-fast);
+}
+
+.cornell-section.focused {
+  box-shadow: inset 0 0 0 2px var(--color-primary);
+  border-radius: var(--radius-sm);
+}
+
+.cornell-cues {
+  flex: 0 0 30%;
+  max-width: 30%;
+  border-right: 2px solid var(--color-border);
+}
+
+.cornell-notes {
+  flex: 1;
+  min-width: 0;
+}
+
+.cornell-summary {
+  flex: 0 0 auto;
+  min-height: 100px;
+  max-height: 200px;
+}
+
+.cornell-section-label {
+  padding: var(--space-2) var(--space-3);
+  font-size: 0.6875rem;
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-text-tertiary);
+  background: var(--color-hover);
+  border-bottom: 1px solid var(--color-border-light);
+  flex-shrink: 0;
+}
+
+.cornell-section-editor {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.cornell-section-editor .ProseMirror {
+  padding: var(--space-3);
+  min-height: 80px;
+  outline: none;
+}
+
+.cornell-section-editor .ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  color: var(--color-text-tertiary);
+  float: left;
+  height: 0;
+  pointer-events: none;
+  font-style: italic;
+}
+
+@media (max-width: 768px) {
+  .cornell-top {
+    flex-direction: column;
+  }
+
+  .cornell-cues {
+    flex: 0 0 auto;
+    max-width: 100%;
+    border-right: none;
+    border-bottom: 2px solid var(--color-border);
+  }
+}
+
 /* Rich editor wrapper — fills the editor area */
 .rich-editor-wrapper {
   display: flex;
