@@ -246,6 +246,24 @@ const Notebooks: React.FC = () => {
     setNotes((prev) => prev.map((n) => (n.id === noteId ? { ...n, content } : n)));
   }, []);
 
+  const handleChangeNoteMethod = useCallback(
+    async (noteId: string, method: NotebookMethod, templateContent: string) => {
+      if (!notebook) return;
+      try {
+        const data = await notesAPI.update(notebook.id, noteId, { method, content: templateContent });
+        const updated: Note = data.note;
+        setNotes((prev) => prev.map((n) => (n.id === noteId ? updated : n)));
+        if (activeNoteId === noteId) {
+          setActiveNoteContent(updated.content);
+        }
+      } catch (err) {
+        console.error('Change note method error:', err);
+        setError('Failed to change note method');
+      }
+    },
+    [notebook, activeNoteId]
+  );
+
   const handleSourcesChange = useCallback(() => {
     if (notebookId) {
       sourcesAPI.getAll(notebookId).then((data) => {
@@ -504,9 +522,11 @@ const Notebooks: React.FC = () => {
             onRenameNote={handleRenameNote}
             onReorderNotes={handleReorderNotes}
             onContentChange={handleNoteContentChange}
+            onChangeNoteMethod={handleChangeNoteMethod}
             onSave={handleSaveNote}
             isSaving={isSaving}
             lastSaved={lastSaved}
+            notebookDefaultMethod={notebook.defaultMethod}
             style={{ width: notesWidth }}
           />
         </div>

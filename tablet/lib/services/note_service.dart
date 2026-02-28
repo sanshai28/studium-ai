@@ -48,12 +48,13 @@ class NoteService {
     );
   }
 
-  /// Updates a note's title and/or content.
+  /// Updates a note's title, content, and/or method.
   Future<Note> update(
     String notebookId,
     String noteId, {
     String? title,
     String? content,
+    String? method,
   }) async {
     final response = await _dio.put(
       '/notebooks/$notebookId/notes/$noteId',
@@ -62,6 +63,8 @@ class NoteService {
         if (title != null) 'title': title,
         // ignore: use_null_aware_elements
         if (content != null) 'content': content,
+        // ignore: use_null_aware_elements
+        if (method != null) 'method': method,
       },
     );
     return Note.fromJson(

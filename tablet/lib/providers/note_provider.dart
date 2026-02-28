@@ -264,6 +264,32 @@ class NotesListNotifier
     }
   }
 
+  /// Changes a note's method and replaces
+  /// content with the new template.
+  Future<void> changeMethod(
+    String noteId,
+    String method,
+    String templateContent,
+  ) async {
+    try {
+      final service =
+          ref.read(noteServiceProvider);
+      final updated = await service.update(
+        arg,
+        noteId,
+        method: method,
+        content: templateContent,
+      );
+      state = state.copyWith(
+        notes: state.notes
+            .map(
+              (n) => n.id == noteId ? updated : n,
+            )
+            .toList(),
+      );
+    } catch (_) {}
+  }
+
   /// Reorders notes by dragging.
   Future<void> reorder(
     List<String> noteIds,

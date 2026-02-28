@@ -1,6 +1,7 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { formatLastSaved } from '../utils/formatDate';
-import type { Note } from '../types';
+import type { Note, NotebookMethod } from '../types';
+import { METHODS } from '../constants/noteMethods';
 import RichTextEditor from './RichTextEditor';
 
 interface NotesPaneProps {
@@ -12,11 +13,25 @@ interface NotesPaneProps {
   onRenameNote: (noteId: string, newTitle: string) => void;
   onReorderNotes: (noteIds: string[]) => void;
   onContentChange: (noteId: string, content: string) => void;
+  onChangeNoteMethod: (noteId: string, method: NotebookMethod, templateContent: string) => void;
   onSave: () => void;
   isSaving: boolean;
   lastSaved: Date | null;
+  notebookDefaultMethod: NotebookMethod;
   style?: React.CSSProperties;
 }
+
+/** Template content matching backend METHOD_TEMPLATES */
+const METHOD_TEMPLATES: Record<NotebookMethod, string> = {
+  cornell:
+    '<h2>Cues / Questions</h2><p></p><h2>Notes</h2><p></p><h2>Summary</h2><p></p>',
+  sentence: '<ol><li></li></ol>',
+  outlining:
+    '<h2>Topic</h2><ul><li>Subtopic<ul><li></li></ul></li></ul>',
+  charting:
+    '<h2>Category 1</h2><ul><li></li></ul><h2>Category 2</h2><ul><li></li></ul>',
+  blank: '<p></p>',
+};
 
 const NotesPane: React.FC<NotesPaneProps> = ({
   notes,
@@ -27,9 +42,11 @@ const NotesPane: React.FC<NotesPaneProps> = ({
   onRenameNote,
   onReorderNotes,
   onContentChange,
+  onChangeNoteMethod,
   onSave,
   isSaving,
   lastSaved,
+  notebookDefaultMethod,
   style,
 }) => {
   const activeNote = notes.find((n) => n.id === activeNoteId) ?? null;
@@ -40,6 +57,12 @@ const NotesPane: React.FC<NotesPaneProps> = ({
   const [titleEditing, setTitleEditing] = useState(false);
   const [titleValue, setTitleValue] = useState('');
   const dragIdRef = useRef<string | null>(null);
+
+  // Method picker state
+  const [showMethodPicker, setShowMethodPicker] = useState(false);
+  const methodPickerRef = useRef<HTMLDivElement>(null);
+  // Confirmation dialog state
+  const [pendingMethod, setPendingMethod] = useState<NotebookMethod | null>(null);
 
   const handleEditorChange = useCallback(
     (html: string) => {
@@ -132,7 +155,60 @@ const NotesPane: React.FC<NotesPaneProps> = ({
     dragIdRef.current = null;
   }, []);
 
+  // Method picker: close on outside click
+  useEffect(() => {
+    if (!showMethodPicker) return;
+    const handleOutsideClick = (e: MouseEvent) => {
+      if (methodPickerRef.current && !methodPickerRef.current.contains(e.target as Node)) {
+        setShowMethodPicker(false);
+      }
+    };
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => document.removeEventListener('mousedown', handleOutsideClick);
+  }, [showMethodPicker]);
+
+  // Method picker: select a method
+  const handleMethodSelect = useCallback(
+    (method: NotebookMethod) => {
+      if (!activeNote || method === activeNote.method) {
+        setShowMethodPicker(false);
+        return;
+      }
+      setShowMethodPicker(false);
+      setPendingMethod(method);
+    },
+    [activeNote]
+  );
+
+  // Method picker: "Use Notebook Default"
+  const handleUseNotebookDefault = useCallback(() => {
+    if (!activeNote || notebookDefaultMethod === activeNote.method) {
+      setShowMethodPicker(false);
+      return;
+    }
+    setShowMethodPicker(false);
+    setPendingMethod(notebookDefaultMethod);
+  }, [activeNote, notebookDefaultMethod]);
+
+  // Confirm method switch
+  const confirmMethodSwitch = useCallback(() => {
+    if (!activeNote || !pendingMethod) return;
+    const templateContent = METHOD_TEMPLATES[pendingMethod];
+    onChangeNoteMethod(activeNote.id, pendingMethod, templateContent);
+    setPendingMethod(null);
+  }, [activeNote, pendingMethod, onChangeNoteMethod]);
+
   const sortedNotes = [...notes].sort((a, b) => a.order - b.order);
+
+  const currentMethodMeta = activeNote
+    ? METHODS.find((m) => m.id === activeNote.method)
+    : null;
+
+  const pendingMethodMeta = pendingMethod
+    ? METHODS.find((m) => m.id === pendingMethod)
+    : null;
+
+  const defaultMethodMeta = METHODS.find((m) => m.id === notebookDefaultMethod);
 
   return (
     <div className="notes-pane" style={style}>
@@ -204,22 +280,57 @@ const NotesPane: React.FC<NotesPaneProps> = ({
         <div className="notes-editor-area">
           {activeNote ? (
             <>
-              {/* Inline editable title */}
+              {/* Inline editable title + method badge */}
               <div className="note-editor-title-bar">
-                {titleEditing ? (
-                  <input
-                    className="note-title-input"
-                    value={titleValue}
-                    onChange={(e) => setTitleValue(e.target.value)}
-                    onBlur={commitTitleEdit}
-                    onKeyDown={handleTitleKeyDown}
-                    autoFocus
-                  />
-                ) : (
-                  <h2 className="note-editor-title" onClick={startTitleEdit} title="Click to rename">
-                    {activeNote.title}
-                  </h2>
-                )}
+                <div className="note-title-row">
+                  {titleEditing ? (
+                    <input
+                      className="note-title-input"
+                      value={titleValue}
+                      onChange={(e) => setTitleValue(e.target.value)}
+                      onBlur={commitTitleEdit}
+                      onKeyDown={handleTitleKeyDown}
+                      autoFocus
+                    />
+                  ) : (
+                    <h2 className="note-editor-title" onClick={startTitleEdit} title="Click to rename">
+                      {activeNote.title}
+                    </h2>
+                  )}
+
+                  {/* Method dropdown */}
+                  <div className="note-method-wrapper" ref={methodPickerRef}>
+                    <button
+                      className="note-method-badge"
+                      onClick={() => setShowMethodPicker((v) => !v)}
+                      title="Change note method"
+                    >
+                      {currentMethodMeta?.icon} {currentMethodMeta?.name}
+                      <span className="note-method-caret">&#9662;</span>
+                    </button>
+                    {showMethodPicker && (
+                      <div className="note-method-dropdown">
+                        {METHODS.map((opt) => (
+                          <button
+                            key={opt.id}
+                            className={`note-method-dropdown-item${opt.id === activeNote.method ? ' active' : ''}`}
+                            onClick={() => handleMethodSelect(opt.id)}
+                          >
+                            <span>{opt.icon} {opt.name}</span>
+                            {opt.id === activeNote.method && <span className="note-method-check">&#10003;</span>}
+                          </button>
+                        ))}
+                        <div className="note-method-dropdown-divider" />
+                        <button
+                          className={`note-method-dropdown-item notebook-default${notebookDefaultMethod === activeNote.method ? ' active' : ''}`}
+                          onClick={handleUseNotebookDefault}
+                        >
+                          <span>{defaultMethodMeta?.icon} Use Notebook Default ({defaultMethodMeta?.name})</span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
 
               <RichTextEditor
@@ -246,6 +357,24 @@ const NotesPane: React.FC<NotesPaneProps> = ({
           )}
         </div>
       </div>
+
+      {/* Confirmation dialog overlay */}
+      {pendingMethod && pendingMethodMeta && (
+        <div className="note-method-confirm-overlay">
+          <div className="note-method-confirm-dialog">
+            <h3>Switch to {pendingMethodMeta.name} Method?</h3>
+            <p>Your content will be replaced with the {pendingMethodMeta.name} template.</p>
+            <div className="note-method-confirm-actions">
+              <button className="btn-cancel" onClick={() => setPendingMethod(null)}>
+                Cancel
+              </button>
+              <button className="btn-confirm" onClick={confirmMethodSwitch}>
+                Switch
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

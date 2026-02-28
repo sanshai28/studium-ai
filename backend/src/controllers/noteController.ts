@@ -71,12 +71,13 @@ export const updateNote = async (req: AuthRequest, res: Response): Promise<void>
     throw new NotFoundError('Note');
   }
 
-  const { title, content } = req.body;
+  const { title, content, method } = req.body;
   const updated = await prisma.note.update({
     where: { id: noteId },
     data: {
       ...(title !== undefined && { title }),
       ...(content !== undefined && { content }),
+      ...(method !== undefined && { method }),
     },
   });
 
