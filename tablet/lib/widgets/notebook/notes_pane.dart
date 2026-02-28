@@ -6,13 +6,11 @@ import '../../models/note.dart';
 import '../../providers/note_provider.dart';
 import '../../providers/notebook_provider.dart';
 import '../../theme/colors.dart';
+import 'cornell_editor.dart';
 
 /// Template content matching backend METHOD_TEMPLATES.
 const Map<String, String> _methodTemplates = {
-  'cornell':
-      '<h2>Cues / Questions</h2><p></p>'
-      '<h2>Notes</h2><p></p>'
-      '<h2>Summary</h2><p></p>',
+  'cornell': '{"cues":"<p></p>","notes":"<p></p>","summary":"<p></p>"}',
   'sentence': '<ol><li></li></ol>',
   'outlining':
       '<h2>Topic</h2><ul><li>Subtopic'
@@ -718,33 +716,47 @@ class _NoteEditor extends StatelessWidget {
         const Divider(height: 1),
         // Content editor
         Expanded(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: TextField(
-              controller: editorController,
-              maxLines: null,
-              expands: true,
-              textAlignVertical:
-                  TextAlignVertical.top,
-              onChanged: onContentChanged,
-              decoration: const InputDecoration(
-                hintText:
-                    'Take notes here...\n\n'
-                    'Content from Q&A can be '
-                    'added using the note '
-                    'button.',
-                border: InputBorder.none,
-                enabledBorder: InputBorder.none,
-                focusedBorder: InputBorder.none,
-                contentPadding: EdgeInsets.zero,
-              ),
-              style: const TextStyle(
-                fontSize: 14,
-                height: 1.6,
-                color: AppColors.textPrimary,
-              ),
-            ),
-          ),
+          child: note.method == 'cornell'
+              ? CornellEditor(
+                  key: ValueKey(
+                    '${note.id}_cornell',
+                  ),
+                  content: note.content,
+                  onChanged: onContentChanged,
+                )
+              : Padding(
+                  padding:
+                      const EdgeInsets.all(16),
+                  child: TextField(
+                    controller: editorController,
+                    maxLines: null,
+                    expands: true,
+                    textAlignVertical:
+                        TextAlignVertical.top,
+                    onChanged: onContentChanged,
+                    decoration:
+                        const InputDecoration(
+                      hintText:
+                          'Take notes here...\n\n'
+                          'Content from Q&A can '
+                          'be added using the '
+                          'note button.',
+                      border: InputBorder.none,
+                      enabledBorder:
+                          InputBorder.none,
+                      focusedBorder:
+                          InputBorder.none,
+                      contentPadding:
+                          EdgeInsets.zero,
+                    ),
+                    style: const TextStyle(
+                      fontSize: 14,
+                      height: 1.6,
+                      color:
+                          AppColors.textPrimary,
+                    ),
+                  ),
+                ),
         ),
       ],
     );

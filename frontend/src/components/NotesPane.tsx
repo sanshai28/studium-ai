@@ -3,6 +3,7 @@ import { formatLastSaved } from '../utils/formatDate';
 import type { Note, NotebookMethod } from '../types';
 import { METHODS } from '../constants/noteMethods';
 import RichTextEditor from './RichTextEditor';
+import CornellEditor from './CornellEditor';
 
 interface NotesPaneProps {
   notes: Note[];
@@ -24,7 +25,7 @@ interface NotesPaneProps {
 /** Template content matching backend METHOD_TEMPLATES */
 const METHOD_TEMPLATES: Record<NotebookMethod, string> = {
   cornell:
-    '<h2>Cues / Questions</h2><p></p><h2>Notes</h2><p></p><h2>Summary</h2><p></p>',
+    JSON.stringify({ cues: '<p></p>', notes: '<p></p>', summary: '<p></p>' }),
   sentence: '<ol><li></li></ol>',
   outlining:
     '<h2>Topic</h2><ul><li>Subtopic<ul><li></li></ul></li></ul>',
@@ -333,12 +334,21 @@ const NotesPane: React.FC<NotesPaneProps> = ({
                 </div>
               </div>
 
-              <RichTextEditor
-                key={activeNote.id}
-                content={activeNote.content}
-                onChange={handleEditorChange}
-                onSave={onSave}
-              />
+              {activeNote.method === 'cornell' ? (
+                <CornellEditor
+                  key={activeNote.id}
+                  content={activeNote.content}
+                  onChange={handleEditorChange}
+                  onSave={onSave}
+                />
+              ) : (
+                <RichTextEditor
+                  key={activeNote.id}
+                  content={activeNote.content}
+                  onChange={handleEditorChange}
+                  onSave={onSave}
+                />
+              )}
 
               <div className="notes-footer">
                 <span className="save-status">
