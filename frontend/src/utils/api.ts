@@ -128,7 +128,7 @@ export const notesAPI = {
     return response.data;
   },
 
-  update: async (notebookId: string, noteId: string, data: { title?: string; content?: string }) => {
+  update: async (notebookId: string, noteId: string, data: { title?: string; content?: string; method?: string }) => {
     const response = await api.put(`/notebooks/${notebookId}/notes/${noteId}`, data);
     return response.data;
   },

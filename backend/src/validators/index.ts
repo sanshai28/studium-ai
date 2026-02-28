@@ -125,6 +125,7 @@ export const updateNoteSchema = z.object({
   body: z.object({
     title: z.string().min(1).max(255).optional(),
     content: z.string().optional(),
+    method: notebookMethodSchema.optional(),
   }),
 });
 

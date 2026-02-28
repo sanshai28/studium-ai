@@ -1,9 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../constants/note_methods.dart';
 import '../../models/note.dart';
 import '../../providers/note_provider.dart';
+import '../../providers/notebook_provider.dart';
 import '../../theme/colors.dart';
+
+/// Template content matching backend METHOD_TEMPLATES.
+const Map<String, String> _methodTemplates = {
+  'cornell':
+      '<h2>Cues / Questions</h2><p></p>'
+      '<h2>Notes</h2><p></p>'
+      '<h2>Summary</h2><p></p>',
+  'sentence': '<ol><li></li></ol>',
+  'outlining':
+      '<h2>Topic</h2><ul><li>Subtopic'
+      '<ul><li></li></ul></li></ul>',
+  'charting':
+      '<h2>Category 1</h2><ul><li></li></ul>'
+      '<h2>Category 2</h2><ul><li></li></ul>',
+  'blank': '<p></p>',
+};
 
 /// Multi-note pane with sidebar and editor area.
 class NotesPane extends ConsumerStatefulWidget {
@@ -63,6 +81,15 @@ class _NotesPaneState
     final activeNoteId = ref.watch(
       activeNoteIdProvider(widget.notebookId),
     );
+
+    final notebookAsync = ref.watch(
+      notebookProvider(widget.notebookId),
+    );
+    final notebookDefaultMethod =
+        notebookAsync.whenOrNull(
+              data: (nb) => nb.defaultMethod,
+            ) ??
+            'blank';
 
     final notes = notesState.notes;
     final activeNote = activeNoteId != null
@@ -149,6 +176,8 @@ class _NotesPaneState
                       _formatLastSaved(
                     notesState.lastSaved,
                   ),
+                  notebookDefaultMethod:
+                      notebookDefaultMethod,
                   onContentChanged: (value) {
                     ref
                         .read(
@@ -181,6 +210,23 @@ class _NotesPaneState
                           ).notifier,
                         )
                         .saveNow(activeNote.id);
+                  },
+                  onChangeMethod:
+                      (method, template) {
+                    ref
+                        .read(
+                          notesListProvider(
+                            widget.notebookId,
+                          ).notifier,
+                        )
+                        .changeMethod(
+                          activeNote.id,
+                          method,
+                          template,
+                        );
+                    // Sync editor to new content.
+                    _editorController.text =
+                        template;
                   },
                 )
               : _EmptyEditor(
@@ -555,9 +601,11 @@ class _NoteEditor extends StatelessWidget {
     required this.titleController,
     required this.isSaving,
     required this.lastSavedText,
+    required this.notebookDefaultMethod,
     required this.onContentChanged,
     required this.onTitleChanged,
     required this.onSave,
+    required this.onChangeMethod,
   });
 
   final Note note;
@@ -565,15 +613,25 @@ class _NoteEditor extends StatelessWidget {
   final TextEditingController titleController;
   final bool isSaving;
   final String lastSavedText;
+  final String notebookDefaultMethod;
   final ValueChanged<String> onContentChanged;
   final ValueChanged<String> onTitleChanged;
   final VoidCallback onSave;
+  final void Function(
+    String method,
+    String templateContent,
+  ) onChangeMethod;
 
   @override
   Widget build(BuildContext context) {
+    final currentMethod =
+        noteMethodById(note.method);
+    final defaultMethod =
+        noteMethodById(notebookDefaultMethod);
+
     return Column(
       children: [
-        // Header with save status
+        // Header with save status + method badge
         Padding(
           padding: const EdgeInsets.symmetric(
             horizontal: 16,
@@ -600,6 +658,17 @@ class _NoteEditor extends StatelessWidget {
                   ),
                 ),
               const Spacer(),
+              // Method badge dropdown
+              _NoteMethodBadge(
+                currentMethod: currentMethod,
+                notebookDefaultMethod:
+                    defaultMethod,
+                noteMethod: note.method,
+                notebookDefaultMethodId:
+                    notebookDefaultMethod,
+                onChangeMethod: onChangeMethod,
+              ),
+              const SizedBox(width: 8),
               IconButton(
                 onPressed:
                     isSaving ? null : onSave,
@@ -679,6 +748,184 @@ class _NoteEditor extends StatelessWidget {
         ),
       ],
     );
+  }
+}
+
+/// Method badge button with dropdown and
+/// confirmation dialog for per-note method change.
+class _NoteMethodBadge extends StatelessWidget {
+  const _NoteMethodBadge({
+    required this.currentMethod,
+    required this.notebookDefaultMethod,
+    required this.noteMethod,
+    required this.notebookDefaultMethodId,
+    required this.onChangeMethod,
+  });
+
+  final NoteMethod currentMethod;
+  final NoteMethod notebookDefaultMethod;
+  final String noteMethod;
+  final String notebookDefaultMethodId;
+  final void Function(
+    String method,
+    String templateContent,
+  ) onChangeMethod;
+
+  @override
+  Widget build(BuildContext context) {
+    return PopupMenuButton<String>(
+      onSelected: (selectedMethod) {
+        if (selectedMethod == noteMethod) return;
+        _showConfirmDialog(
+          context,
+          selectedMethod,
+        );
+      },
+      itemBuilder: (context) => [
+        ...noteMethods.map(
+          (m) => PopupMenuItem<String>(
+            value: m.id,
+            child: Row(
+              children: [
+                Icon(
+                  m.icon,
+                  size: 20,
+                  color: m.id == noteMethod
+                      ? AppColors.primary
+                      : AppColors.textSecondary,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    m.name,
+                    style: TextStyle(
+                      fontWeight:
+                          m.id == noteMethod
+                              ? FontWeight.w600
+                              : FontWeight.w400,
+                      color:
+                          m.id == noteMethod
+                              ? AppColors.primary
+                              : AppColors
+                                  .textPrimary,
+                    ),
+                  ),
+                ),
+                if (m.id == noteMethod)
+                  const Icon(
+                    Icons.check,
+                    size: 18,
+                    color: AppColors.primary,
+                  ),
+              ],
+            ),
+          ),
+        ),
+        const PopupMenuDivider(),
+        PopupMenuItem<String>(
+          value: notebookDefaultMethodId,
+          child: Row(
+            children: [
+              Icon(
+                notebookDefaultMethod.icon,
+                size: 20,
+                color: AppColors.textSecondary,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'Use Notebook Default '
+                  '(${notebookDefaultMethod.name})',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color:
+                        AppColors.textSecondary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: 8,
+          vertical: 4,
+        ),
+        decoration: BoxDecoration(
+          color: AppColors.primary
+              .withValues(alpha: 0.1),
+          borderRadius:
+              BorderRadius.circular(6),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              currentMethod.icon,
+              size: 14,
+              color: AppColors.primary,
+            ),
+            const SizedBox(width: 4),
+            Text(
+              currentMethod.name,
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: AppColors.primary,
+              ),
+            ),
+            const SizedBox(width: 2),
+            const Icon(
+              Icons.arrow_drop_down,
+              size: 16,
+              color: AppColors.primary,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showConfirmDialog(
+    BuildContext context,
+    String newMethod,
+  ) {
+    final method = noteMethodById(newMethod);
+    showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(
+          'Switch to ${method.name} Method?',
+        ),
+        content: Text(
+          'Your content will be replaced with '
+          'the ${method.name} template.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () =>
+                Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () =>
+                Navigator.pop(context, true),
+            style: TextButton.styleFrom(
+              foregroundColor: AppColors.primary,
+            ),
+            child: const Text('Switch'),
+          ),
+        ],
+      ),
+    ).then((confirmed) {
+      if (confirmed == true) {
+        final template =
+            _methodTemplates[newMethod] ??
+                '<p></p>';
+        onChangeMethod(newMethod, template);
+      }
+    });
   }
 }
 
