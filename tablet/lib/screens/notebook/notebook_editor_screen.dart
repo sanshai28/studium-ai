@@ -277,6 +277,9 @@ class _MethodBadge extends ConsumerWidget {
     WidgetRef ref,
   ) {
     final method = noteMethodById(currentMethod);
+    final notesState =
+        ref.watch(notesListProvider(notebookId));
+    final notesCount = notesState.notes.length;
     return PopupMenuButton<String>(
       onSelected: (newMethod) async {
         if (newMethod == currentMethod) return;
@@ -290,6 +293,22 @@ class _MethodBadge extends ConsumerWidget {
           ref.invalidate(
             notebookProvider(notebookId),
           );
+          if (context.mounted) {
+            final selected =
+                noteMethodById(newMethod);
+            ScaffoldMessenger.of(context)
+                .showSnackBar(
+              SnackBar(
+                content: Text(
+                  'New notes will use '
+                  '${selected.name}. Your '
+                  '$notesCount existing '
+                  '${notesCount == 1 ? 'note' : 'notes'}'
+                  ' won\'t change.',
+                ),
+              ),
+            );
+          }
         } catch (e) {
           if (context.mounted) {
             ScaffoldMessenger.of(context)
@@ -303,49 +322,65 @@ class _MethodBadge extends ConsumerWidget {
           }
         }
       },
-      itemBuilder: (context) => noteMethods
-          .map(
-            (m) => PopupMenuItem<String>(
-              value: m.id,
-              child: Row(
-                children: [
-                  Icon(
-                    m.icon,
-                    size: 20,
+      itemBuilder: (context) => [
+        ...noteMethods.map(
+          (m) => PopupMenuItem<String>(
+            value: m.id,
+            child: Row(
+              children: [
+                Icon(
+                  m.icon,
+                  size: 20,
+                  color:
+                      m.id == currentMethod
+                          ? AppColors.primary
+                          : AppColors
+                              .textSecondary,
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  m.name,
+                  style: TextStyle(
+                    fontWeight:
+                        m.id == currentMethod
+                            ? FontWeight.w600
+                            : FontWeight.w400,
                     color:
                         m.id == currentMethod
                             ? AppColors.primary
                             : AppColors
-                                .textSecondary,
+                                .textPrimary,
                   ),
-                  const SizedBox(width: 12),
-                  Text(
-                    m.name,
-                    style: TextStyle(
-                      fontWeight:
-                          m.id == currentMethod
-                              ? FontWeight.w600
-                              : FontWeight.w400,
-                      color:
-                          m.id == currentMethod
-                              ? AppColors.primary
-                              : AppColors
-                                  .textPrimary,
-                    ),
+                ),
+                if (m.id == currentMethod) ...[
+                  const Spacer(),
+                  const Icon(
+                    Icons.check,
+                    size: 18,
+                    color: AppColors.primary,
                   ),
-                  if (m.id == currentMethod) ...[
-                    const Spacer(),
-                    const Icon(
-                      Icons.check,
-                      size: 18,
-                      color: AppColors.primary,
-                    ),
-                  ],
                 ],
-              ),
+              ],
             ),
-          )
-          .toList(),
+          ),
+        ),
+        const PopupMenuDivider(),
+        PopupMenuItem<String>(
+          enabled: false,
+          height: 32,
+          child: Text(
+            'Only new notes will use the '
+            'selected method. Your '
+            '$notesCount existing '
+            '${notesCount == 1 ? 'note' : 'notes'}'
+            ' won\'t change.',
+            style: TextStyle(
+              fontSize: 11,
+              color: AppColors.textSecondary,
+            ),
+          ),
+        ),
+      ],
       child: Container(
         padding: const EdgeInsets.symmetric(
           horizontal: 10,
