@@ -38,6 +38,7 @@ export interface Note {
   id: string;
   title: string;
   content: string;
+  method: NotebookMethod;
   order: number;
   notebookId: string;
   createdAt: string;
